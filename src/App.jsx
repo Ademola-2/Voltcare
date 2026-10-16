@@ -167,6 +167,71 @@ function ElectricalCalculator() {
   );
 }
 
+
+function LoadCalculator() {
+  const [appliances, setAppliances] = useState([
+    { id: 1, name: "LED bulbs", quantity: "4", watts: "10", hours: "6" },
+    { id: 2, name: "Fan", quantity: "1", watts: "75", hours: "8" },
+  ]);
+  const [nextId, setNextId] = useState(3);
+  const [calculated, setCalculated] = useState(true);
+
+  const updateAppliance = (id, field, value) => {
+    setAppliances((items) => items.map((item) => item.id === id ? { ...item, [field]: value } : item));
+    setCalculated(false);
+  };
+  const addAppliance = () => {
+    setAppliances((items) => [...items, { id: nextId, name: "", quantity: "1", watts: "", hours: "1" }]);
+    setNextId((id) => id + 1);
+    setCalculated(false);
+  };
+  const removeAppliance = (id) => {
+    setAppliances((items) => items.filter((item) => item.id !== id));
+    setCalculated(false);
+  };
+  const valid = appliances.length > 0 && appliances.every((item) =>
+    item.name.trim() && item.quantity.trim() && item.watts.trim() && item.hours.trim() &&
+    Number(item.quantity) > 0 && Number(item.watts) >= 0 && Number(item.hours) >= 0 &&
+    Number(item.hours) <= 24 && Number.isFinite(Number(item.quantity)) &&
+    Number.isFinite(Number(item.watts)) && Number.isFinite(Number(item.hours))
+  );
+  const totalWatts = appliances.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.watts || 0), 0);
+  const dailyWh = appliances.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.watts || 0) * Number(item.hours || 0), 0);
+  const fmt = (value) => Number(value.toPrecision(6)).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+  return (
+    <section className="calculator-section section-wrap" id="load-calculator">
+      <div className="section-heading">
+        <div><span className="section-kicker">TOOL 02 · LOAD PLANNING</span><h2>Know what your<br className="desktop-break" /> appliances need.</h2></div>
+        <p>List your appliances, their quantity, rated power, and estimated daily use to calculate connected load and daily energy consumption.</p>
+      </div>
+      <div className="load-panel">
+        <div className="load-panel-heading"><div><h3>Appliance list</h3><p>Enter the values from the appliance label where possible.</p></div><button className="button button-secondary add-appliance" type="button" onClick={addAppliance}><span>＋</span> Add appliance</button></div>
+        <div className="appliance-list">
+          {appliances.map((item) => (
+            <div className="appliance-row" key={item.id}>
+              <label className="appliance-name">Appliance name<input value={item.name} onChange={(e) => updateAppliance(item.id, "name", e.target.value)} placeholder="e.g. Television" /></label>
+              <label>Qty<input type="number" min="1" step="1" value={item.quantity} onChange={(e) => updateAppliance(item.id, "quantity", e.target.value)} /></label>
+              <label>Power (W)<input type="number" min="0" step="any" value={item.watts} onChange={(e) => updateAppliance(item.id, "watts", e.target.value)} placeholder="Watts" /></label>
+              <label>Hours/day<input type="number" min="0" max="24" step="any" value={item.hours} onChange={(e) => updateAppliance(item.id, "hours", e.target.value)} /></label>
+              <button className="remove-appliance" type="button" onClick={() => removeAppliance(item.id)} aria-label={`Remove ${item.name || "appliance"}`}>×</button>
+            </div>
+          ))}
+        </div>
+        <button className="button button-primary calculate-button load-calculate" type="button" onClick={() => setCalculated(true)}>Calculate total load <ArrowRight size={17} /></button>
+        {calculated && valid ? (
+          <div className="load-results" aria-live="polite">
+            <div className="load-result"><span>Total connected load</span><strong>{fmt(totalWatts)} <small>W</small></strong><p>Sum of appliance quantity × rated power.</p></div>
+            <div className="load-result"><span>Estimated daily energy</span><strong>{fmt(dailyWh / 1000)} <small>kWh/day</small></strong><p>Sum of power × quantity × hours used.</p></div>
+            <div className="load-result"><span>Estimated 30-day energy</span><strong>{fmt((dailyWh * 30) / 1000)} <small>kWh/month</small></strong><p>Assumes similar usage every day.</p></div>
+          </div>
+        ) : calculated ? <p className="calculator-error">Please enter a name, positive quantity, non-negative power, and daily hours from 0 to 24 for every appliance.</p> : <p className="load-hint">Update your appliance list, then tap “Calculate total load” to refresh the estimates.</p>}
+      </div>
+      <p className="calculator-disclaimer">Estimates use rated watts and user-entered hours. Actual consumption varies with operating conditions. Connected load is not the same as peak demand; motor starting current and suitable safety margins need separate assessment.</p>
+    </section>
+  );
+}
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -249,7 +314,7 @@ function App() {
                 <span className="tool-tag">{tag}</span>
                 <h3>{title}</h3>
                 <p>{description}</p>
-                <a href={title === "Electrical calculator" ? "#electrical-calculator" : "#contact"} className="text-link">{title === "Electrical calculator" ? "Try calculator" : "Coming soon"} <ArrowUpRight size={15} /></a>
+                <a href={title === "Electrical calculator" ? "#electrical-calculator" : title === "Load calculator" ? "#load-calculator" : "#contact"} className="text-link">{title === "Electrical calculator" || title === "Load calculator" ? "Try calculator" : "Coming soon"} <ArrowUpRight size={15} /></a>
               </article>
             ))}
           </div>
@@ -257,6 +322,8 @@ function App() {
         </section>
 
         <ElectricalCalculator />
+
+        <LoadCalculator />
 
         <section className="how-section" id="how-it-works">
           <div className="section-wrap how-inner">
