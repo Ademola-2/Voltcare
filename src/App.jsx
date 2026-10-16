@@ -67,6 +67,106 @@ function Brand() {
   );
 }
 
+
+const quantityOptions = [
+  { value: "voltage", label: "Voltage (V)", unit: "V" },
+  { value: "current", label: "Current (I)", unit: "A" },
+  { value: "resistance", label: "Resistance (R)", unit: "Ω" },
+  { value: "power", label: "Power (P)", unit: "W" },
+];
+
+function solveElectrical(first, a, second, b) {
+  const values = {};
+  values[first] = a;
+  values[second] = b;
+  const has = (key) => Number.isFinite(values[key]) && values[key] > 0;
+  if (first === second) return { error: "Choose two different electrical quantities." };
+
+  if (has("voltage") && has("current")) {
+    values.resistance = values.voltage / values.current;
+    values.power = values.voltage * values.current;
+  } else if (has("voltage") && has("resistance")) {
+    values.current = values.voltage / values.resistance;
+    values.power = (values.voltage * values.voltage) / values.resistance;
+  } else if (has("current") && has("resistance")) {
+    values.voltage = values.current * values.resistance;
+    values.power = values.current * values.current * values.resistance;
+  } else if (has("voltage") && has("power")) {
+    values.current = values.power / values.voltage;
+    values.resistance = (values.voltage * values.voltage) / values.power;
+  } else if (has("current") && has("power")) {
+    values.voltage = values.power / values.current;
+    values.resistance = values.power / (values.current * values.current);
+  } else if (has("resistance") && has("power")) {
+    values.voltage = Math.sqrt(values.power * values.resistance);
+    values.current = Math.sqrt(values.power / values.resistance);
+  } else {
+    return { error: "Enter positive values for both quantities." };
+  }
+  return { values };
+}
+
+function ElectricalCalculator() {
+  const [first, setFirst] = useState("voltage");
+  const [second, setSecond] = useState("current");
+  const [firstValue, setFirstValue] = useState("12");
+  const [secondValue, setSecondValue] = useState("2");
+  const [result, setResult] = useState(null);
+
+  const calculate = (event) => {
+    event.preventDefault();
+    const a = Number(firstValue);
+    const b = Number(secondValue);
+    if (!firstValue.trim() || !secondValue.trim() || !Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) {
+      setResult({ error: "Enter a positive number in both fields." });
+      return;
+    }
+    setResult(solveElectrical(first, a, second, b));
+  };
+
+  const format = (number) => Number.isFinite(number) ? Number(number.toPrecision(6)).toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—";
+
+  return (
+    <section className="calculator-section section-wrap" id="electrical-calculator">
+      <div className="section-heading">
+        <div><span className="section-kicker">TOOL 01 · OHM’S LAW</span><h2>Your electrical<br className="desktop-break" /> calculator is ready.</h2></div>
+        <p>Enter any two different positive values. VoltCare calculates the other electrical quantities using basic DC circuit relationships.</p>
+      </div>
+      <div className="calculator-panel">
+        <form className="calculator-form" onSubmit={calculate}>
+          <label>First known quantity
+            <select value={first} onChange={(event) => { setFirst(event.target.value); setResult(null); }}>
+              {quantityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          </label>
+          <label>Value
+            <input type="number" min="0" step="any" value={firstValue} onChange={(event) => setFirstValue(event.target.value)} placeholder="Enter a value" />
+          </label>
+          <label>Second known quantity
+            <select value={second} onChange={(event) => { setSecond(event.target.value); setResult(null); }}>
+              {quantityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          </label>
+          <label>Value
+            <input type="number" min="0" step="any" value={secondValue} onChange={(event) => setSecondValue(event.target.value)} placeholder="Enter a value" />
+          </label>
+          <button className="button button-primary calculate-button" type="submit">Calculate values <ArrowRight size={17} /></button>
+        </form>
+        <div className="calculator-results" aria-live="polite">
+          <div className="results-heading"><span className="section-kicker">CALCULATION RESULTS</span><span className="results-badge"><Check size={13} /> Instant estimate</span></div>
+          {result?.error ? <p className="calculator-error">{result.error}</p> : result?.values ? (
+            <div className="result-grid">
+              {quantityOptions.map((item) => <div className="result-item" key={item.value}><span>{item.label}</span><strong>{format(result.values[item.value])} <small>{item.unit}</small></strong></div>)}
+            </div>
+          ) : <div className="result-placeholder"><Zap size={25} /><p>Enter two known values and tap <strong>Calculate values</strong> to see all four results here.</p></div>}
+          <p className="formula-note">Uses V = I × R and P = V × I, with equivalent formulas as needed. Intended for basic DC/resistive circuit learning.</p>
+        </div>
+      </div>
+      <p className="calculator-disclaimer">Educational estimate only. AC circuits, power factor, component limits, and local installation requirements may need additional analysis by a qualified professional.</p>
+    </section>
+  );
+}
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -149,12 +249,14 @@ function App() {
                 <span className="tool-tag">{tag}</span>
                 <h3>{title}</h3>
                 <p>{description}</p>
-                <a href="#contact" className="text-link">Coming soon <ArrowUpRight size={15} /></a>
+                <a href={title === "Electrical calculator" ? "#electrical-calculator" : "#contact"} className="text-link">{title === "Electrical calculator" ? "Try calculator" : "Coming soon"} <ArrowUpRight size={15} /></a>
               </article>
             ))}
           </div>
           <div className="tools-note"><span className="note-icon"><CircleHelp size={18} /></span><p><strong>Built around clarity, not guesswork.</strong> Results will show their assumptions and limitations. Installation decisions should always account for local electrical codes and qualified professional advice.</p></div>
         </section>
+
+        <ElectricalCalculator />
 
         <section className="how-section" id="how-it-works">
           <div className="section-wrap how-inner">
