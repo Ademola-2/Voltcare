@@ -331,3 +331,57 @@ h1, h2, h3 { font-family: Manrope, sans-serif; }
   .solar-panel { padding: 16px; }
   .solar-assumptions { padding: 15px; }
 }
+
+
+/* Learning centre */
+.learning-centre { padding-top: 76px; padding-bottom: 82px; scroll-margin-top: 95px; }
+.lesson-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.lesson-card { padding: 24px; border: 1px solid #e9e4f5; border-radius: 18px; background: #fff; box-shadow: 0 12px 35px rgba(39,20,88,.04); }
+.lesson-number { display: inline-block; margin-bottom: 13px; color: #6c3bff; font-size: 9px; font-weight: 800; letter-spacing: 1.2px; }
+.lesson-card h3 { margin-bottom: 9px; color: #241746; font-size: 21px; }
+.lesson-card > p { color: #716d80; font-size: 13px; line-height: 1.75; }
+.lesson-formula { margin: 16px 0; padding: 15px; border-radius: 12px; background: #f1ecff; color: #5930d6; font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; text-align: center; overflow-wrap: anywhere; }
+.lesson-example { margin-bottom: 17px; padding: 14px; border-radius: 11px; background: #f8f7fc; color: #716d80; font-size: 12px; line-height: 1.7; }
+.lesson-example > strong { display: block; color: #38324b; margin-bottom: 5px; }
+.lesson-example p { margin: 0; }
+.learning-safety { display: flex; align-items: flex-start; gap: 9px; margin: 20px 0 0; padding: 15px 17px; border-radius: 12px; background: #f8f6fd; color: #716d80; font-size: 12px; line-height: 1.7; }
+.learning-safety svg { flex-shrink: 0; color: #6c3bff; margin-top: 1px; }
+
+/* User-controlled theme toggle; theme does not follow the device setting */
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: #514767; cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.nav-wrap { gap: 16px; }
+.dark-mode { background: #11101a; color: #f6f3ff; --ink: #f6f3ff; --muted: #b5aec7; --pale: #191725; --line: #302b40; }
+.dark-mode .announcement { background: #211a35; color: #d1c2ff; }
+.dark-mode .site-header { background: rgba(20,18,30,.96); border-color: #302b40; }
+.dark-mode .main-nav { color: #d2cce0; }
+.dark-mode .main-nav.is-open { background: #171521; }
+.dark-mode .menu-toggle, .dark-mode .theme-toggle { background: #211e2d; color: #f6f3ff; border-color: #393348; }
+.dark-mode .brand small, .dark-mode .footer-main > p { color: #aaa3bd; }
+.dark-mode .hero-text, .dark-mode .section-heading > p { color: #b5aec7; }
+.dark-mode .eyebrow { background: #211a35; border-color: #39304f; }
+.dark-mode .metrics-strip, .dark-mode .site-footer { border-color: #302b40; }
+.dark-mode .metric-icon, .dark-mode .learn-icon { background: #29213f; }
+.dark-mode .tool-card, .dark-mode .calculator-panel, .dark-mode .load-panel, .dark-mode .lesson-card { background: #191725; border-color: #302b40; box-shadow: 0 18px 55px rgba(0,0,0,.12); }
+.dark-mode .tool-card h3, .dark-mode .lesson-card h3, .dark-mode .load-panel-heading h3 { color: #f6f3ff; }
+.dark-mode .tool-card > p, .dark-mode .load-panel-heading p, .dark-mode .lesson-card > p { color: #b5aec7; }
+.dark-mode .tools-note, .dark-mode .calculator-results, .dark-mode .load-result, .dark-mode .lesson-example, .dark-mode .learning-safety { background: #211e2d; color: #c0b8d1; }
+.dark-mode .tools-note strong, .dark-mode .lesson-example > strong { color: #f1ecff; }
+.dark-mode .calculator-form label, .dark-mode .appliance-row label { color: #d2cce0; }
+.dark-mode .calculator-form select, .dark-mode .calculator-form input, .dark-mode .appliance-row input { background: #14121e; color: #f6f3ff; border-color: #393348; }
+.dark-mode .result-item { background: #191725; border-color: #393348; }
+.dark-mode .result-item strong, .dark-mode .load-result strong { color: #f6f3ff; }
+.dark-mode .result-item span, .dark-mode .load-result > span, .dark-mode .load-result p, .dark-mode .formula-note, .dark-mode .calculator-disclaimer, .dark-mode .load-hint { color: #b5aec7; }
+.dark-mode .solar-assumptions { background: #211a35; border-color: #39304f; color: #d2cce0; }
+.dark-mode .solar-assumptions strong { color: #e0d6ff; }
+.dark-mode .appliance-row { background: #14121e; border-color: #393348; }
+.dark-mode .lesson-formula { background: #29213f; color: #c8b6ff; }
+.dark-mode .footer-links { color: #c0b8d1; }
+.dark-mode .footer-bottom { border-color: #302b40; color: #aaa3bd; }
+.dark-mode .main-nav > a:not(.nav-cta):hover, .dark-mode .footer-links a:hover { color: #c8b6ff; }
+@media (max-width: 720px) {
+  .theme-toggle { margin-left: auto; min-height: 38px; padding-inline: 10px; }
+  .nav-wrap { gap: 8px; }
+  .lesson-grid { grid-template-columns: 1fr; }
+  .learning-centre { padding-top: 56px; padding-bottom: 60px; }
+  .lesson-card { padding: 19px; }
+}
