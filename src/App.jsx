@@ -279,6 +279,62 @@ function EnergyCalculator() {
   );
 }
 
+
+function SolarPlanner() {
+  const [dailyKwh, setDailyKwh] = useState("5");
+  const [sunHours, setSunHours] = useState("4.5");
+  const [derating, setDerating] = useState("0.75");
+  const [autonomy, setAutonomy] = useState("1");
+  const [depth, setDepth] = useState("0.8");
+  const [inverterEfficiency, setInverterEfficiency] = useState("0.9");
+  const [voltage, setVoltage] = useState("24");
+  const [calculated, setCalculated] = useState(false);
+
+  const values = [dailyKwh, sunHours, derating, autonomy, depth, inverterEfficiency, voltage].map(Number);
+  const [energy, sun, lossFactor, days, dod, inverterEff, batteryVoltage] = values;
+  const valid = [dailyKwh, sunHours, derating, autonomy, depth, inverterEfficiency, voltage].every((v) => v.trim() !== "" && Number.isFinite(Number(v))) &&
+    energy > 0 && sun > 0 && lossFactor > 0 && lossFactor <= 1 && days > 0 &&
+    dod > 0 && dod <= 1 && inverterEff > 0 && inverterEff <= 1 && batteryVoltage > 0;
+  const panelWatts = energy * 1000 / (sun * lossFactor);
+  const batteryWh = energy * 1000 * days / (dod * inverterEff);
+  const batteryAh = batteryWh / batteryVoltage;
+  const fmt = (value) => Number.isFinite(value) ? Number(value.toPrecision(5)).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—";
+
+  return (
+    <section className="calculator-section section-wrap" id="solar-planner">
+      <div className="section-heading">
+        <div><span className="section-kicker">TOOL 04 · SOLAR ENERGY</span><h2>Start planning your<br className="desktop-break" /> solar system.</h2></div>
+        <p>Estimate a starting point for solar panel capacity and battery storage using your daily energy demand and a few planning assumptions.</p>
+      </div>
+      <div className="calculator-panel solar-panel">
+        <form className="calculator-form solar-form" onSubmit={(event) => { event.preventDefault(); setCalculated(true); }}>
+          <label>Daily energy use (kWh/day)<input type="number" min="0.01" step="any" value={dailyKwh} onChange={(e) => { setDailyKwh(e.target.value); setCalculated(false); }} /></label>
+          <label>Peak sun hours per day<input type="number" min="0.1" step="any" value={sunHours} onChange={(e) => { setSunHours(e.target.value); setCalculated(false); }} /></label>
+          <label>Solar system derating factor<input type="number" min="0.01" max="1" step="any" value={derating} onChange={(e) => { setDerating(e.target.value); setCalculated(false); }} /></label>
+          <label>Battery backup (days)<input type="number" min="0.1" step="any" value={autonomy} onChange={(e) => { setAutonomy(e.target.value); setCalculated(false); }} /></label>
+          <label>Usable battery fraction (0–1)<input type="number" min="0.01" max="1" step="any" value={depth} onChange={(e) => { setDepth(e.target.value); setCalculated(false); }} /></label>
+          <label>Inverter efficiency (0–1)<input type="number" min="0.01" max="1" step="any" value={inverterEfficiency} onChange={(e) => { setInverterEfficiency(e.target.value); setCalculated(false); }} /></label>
+          <label>Nominal battery voltage (V)<input type="number" min="1" step="any" value={voltage} onChange={(e) => { setVoltage(e.target.value); setCalculated(false); }} /></label>
+          <button className="button button-primary calculate-button" type="submit">Estimate solar system <ArrowRight size={17} /></button>
+        </form>
+        <div className="calculator-results solar-results" aria-live="polite">
+          <div className="results-heading"><span className="section-kicker">PRELIMINARY ESTIMATE</span><span className="results-badge"><Sun size={13} /> Solar + storage</span></div>
+          {calculated && !valid ? <p className="calculator-error">Check your entries. Energy, sun hours, backup days and voltage must be positive; derating, usable battery fraction and inverter efficiency must be greater than 0 and no more than 1.</p> : calculated ? (
+            <div className="result-grid">
+              <div className="result-item"><span>Estimated solar array</span><strong>{fmt(panelWatts)} <small>Wp</small></strong></div>
+              <div className="result-item"><span>Estimated battery storage</span><strong>{fmt(batteryWh / 1000)} <small>kWh nominal</small></strong></div>
+              <div className="result-item"><span>Approx. battery capacity</span><strong>{fmt(batteryAh)} <small>Ah at {fmt(batteryVoltage)} V</small></strong></div>
+              <div className="result-item"><span>Daily energy entered</span><strong>{fmt(energy)} <small>kWh/day</small></strong></div>
+            </div>
+          ) : <div className="result-placeholder"><Sun size={25} /><p>Enter your energy needs and planning assumptions, then tap <strong>Estimate solar system</strong>.</p></div>}
+          <p className="formula-note">Array estimate = daily Wh ÷ (peak sun hours × derating factor). Battery estimate includes backup days, usable battery fraction, and inverter efficiency.</p>
+        </div>
+      </div>
+      <div className="solar-assumptions"><strong>Important planning note</strong><p>Start with your Energy Calculator result where possible. Peak sun hours vary by location and season. This simplified estimate does not size an inverter, charge controller, cables, protection devices, or account fully for surge loads, shading, battery chemistry, temperature, or local electrical rules. Have a qualified solar professional verify the design before buying equipment or installing a system.</p></div>
+    </section>
+  );
+}
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -361,7 +417,7 @@ function App() {
                 <span className="tool-tag">{tag}</span>
                 <h3>{title}</h3>
                 <p>{description}</p>
-                <a href={title === "Electrical calculator" ? "#electrical-calculator" : title === "Load calculator" ? "#load-calculator" : title === "Energy calculator" ? "#energy-calculator" : "#contact"} className="text-link">{title !== "Solar planner" ? "Try calculator" : "Coming soon"} <ArrowUpRight size={15} /></a>
+                <a href={title === "Electrical calculator" ? "#electrical-calculator" : title === "Load calculator" ? "#load-calculator" : title === "Energy calculator" ? "#energy-calculator" : title === "Solar planner" ? "#solar-planner" : "#contact"} className="text-link">"Try planner" <ArrowUpRight size={15} /></a>
               </article>
             ))}
           </div>
@@ -373,6 +429,8 @@ function App() {
         <LoadCalculator />
 
         <EnergyCalculator />
+
+        <SolarPlanner />
 
         <section className="how-section" id="how-it-works">
           <div className="section-wrap how-inner">
