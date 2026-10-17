@@ -232,6 +232,53 @@ function LoadCalculator() {
   );
 }
 
+
+function EnergyCalculator() {
+  const [power, setPower] = useState("100");
+  const [hours, setHours] = useState("5");
+  const [quantity, setQuantity] = useState("1");
+  const [days, setDays] = useState("30");
+  const [calculated, setCalculated] = useState(false);
+
+  const valuesValid = [power, hours, quantity, days].every((v) => v.trim() !== "" && Number.isFinite(Number(v))) &&
+    Number(power) >= 0 && Number(hours) >= 0 && Number(hours) <= 24 &&
+    Number(quantity) > 0 && Number(days) > 0 && Number(days) <= 366;
+
+  const dailyWh = Math.max(0, Number(power) || 0) * Math.max(0, Number(hours) || 0) * Math.max(0, Number(quantity) || 0);
+  const fmt = (value) => Number(value.toPrecision(6)).toLocaleString(undefined, { maximumFractionDigits: 3 });
+
+  return (
+    <section className="calculator-section section-wrap" id="energy-calculator">
+      <div className="section-heading">
+        <div><span className="section-kicker">TOOL 03 · ENERGY USE</span><h2>Understand your<br className="desktop-break" /> energy consumption.</h2></div>
+        <p>Estimate energy use from an appliance’s rated power, daily operating time, quantity, and the number of days in your period.</p>
+      </div>
+      <div className="calculator-panel energy-calculator-panel">
+        <form className="calculator-form energy-form" onSubmit={(event) => { event.preventDefault(); setCalculated(true); }}>
+          <label>Appliance power (W)<input type="number" min="0" step="any" value={power} onChange={(e) => { setPower(e.target.value); setCalculated(false); }} /></label>
+          <label>Hours used per day<input type="number" min="0" max="24" step="any" value={hours} onChange={(e) => { setHours(e.target.value); setCalculated(false); }} /></label>
+          <label>Number of appliances<input type="number" min="1" step="1" value={quantity} onChange={(e) => { setQuantity(e.target.value); setCalculated(false); }} /></label>
+          <label>Period (days)<input type="number" min="1" max="366" step="1" value={days} onChange={(e) => { setDays(e.target.value); setCalculated(false); }} /></label>
+          <button className="button button-primary calculate-button" type="submit">Calculate energy <ArrowRight size={17} /></button>
+        </form>
+        <div className="calculator-results" aria-live="polite">
+          <div className="results-heading"><span className="section-kicker">ENERGY ESTIMATE</span><span className="results-badge"><Check size={13} /> Watt-hours & kWh</span></div>
+          {calculated && !valuesValid ? <p className="calculator-error">Enter valid values: power must be non-negative, daily hours 0–24, quantity at least 1, and period 1–366 days.</p> : calculated ? (
+            <div className="result-grid">
+              <div className="result-item"><span>Daily energy</span><strong>{fmt(dailyWh / 1000)} <small>kWh/day</small></strong></div>
+              <div className="result-item"><span>Total for selected period</span><strong>{fmt((dailyWh * Number(days)) / 1000)} <small>kWh</small></strong></div>
+              <div className="result-item"><span>Daily energy in Wh</span><strong>{fmt(dailyWh)} <small>Wh/day</small></strong></div>
+              <div className="result-item"><span>Average power while operating</span><strong>{fmt(Number(power) * Number(quantity))} <small>W</small></strong></div>
+            </div>
+          ) : <div className="result-placeholder"><BatteryCharging size={25} /><p>Enter the appliance details and tap <strong>Calculate energy</strong> to estimate daily and period consumption.</p></div>}
+          <p className="formula-note">Energy (Wh) = power (W) × quantity × hours used. Divide Wh by 1,000 to convert to kWh.</p>
+        </div>
+      </div>
+      <p className="calculator-disclaimer">This is an estimate based on rated power and the usage you enter. Appliances with thermostats, variable loads, or standby consumption may use a different amount in practice.</p>
+    </section>
+  );
+}
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -314,7 +361,7 @@ function App() {
                 <span className="tool-tag">{tag}</span>
                 <h3>{title}</h3>
                 <p>{description}</p>
-                <a href={title === "Electrical calculator" ? "#electrical-calculator" : title === "Load calculator" ? "#load-calculator" : "#contact"} className="text-link">{title === "Electrical calculator" || title === "Load calculator" ? "Try calculator" : "Coming soon"} <ArrowUpRight size={15} /></a>
+                <a href={title === "Electrical calculator" ? "#electrical-calculator" : title === "Load calculator" ? "#load-calculator" : title === "Energy calculator" ? "#energy-calculator" : "#contact"} className="text-link">{title !== "Solar planner" ? "Try calculator" : "Coming soon"} <ArrowUpRight size={15} /></a>
               </article>
             ))}
           </div>
@@ -324,6 +371,8 @@ function App() {
         <ElectricalCalculator />
 
         <LoadCalculator />
+
+        <EnergyCalculator />
 
         <section className="how-section" id="how-it-works">
           <div className="section-wrap how-inner">
