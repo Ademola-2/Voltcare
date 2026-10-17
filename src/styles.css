@@ -318,3 +318,16 @@ h1, h2, h3 { font-family: Manrope, sans-serif; }
 @media (max-width: 760px) {
   .energy-calculator-panel { padding: 16px; }
 }
+
+
+/* Preliminary solar and battery planner */
+.solar-panel { margin-top: 2px; }
+.solar-form { align-content: start; }
+.solar-form input { min-height: 48px; }
+.solar-assumptions { margin-top: 16px; padding: 18px 20px; border: 1px solid #e7ddff; border-radius: 14px; background: #f5f1ff; color: #4e426b; font-size: 12px; line-height: 1.8; }
+.solar-assumptions strong { display: block; color: #40258a; margin-bottom: 5px; }
+.solar-assumptions p { margin: 0; }
+@media (max-width: 760px) {
+  .solar-panel { padding: 16px; }
+  .solar-assumptions { padding: 15px; }
+}
