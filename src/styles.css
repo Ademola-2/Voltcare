@@ -309,3 +309,12 @@ h1, h2, h3 { font-family: Manrope, sans-serif; }
  .remove-appliance { grid-column: 2; justify-self: end; width: 100%; }
  .load-results { grid-template-columns: 1fr; }
 }
+
+
+/* Energy use calculator */
+.energy-calculator-panel { margin-top: 2px; }
+.energy-form { align-content: start; }
+.energy-form input { min-height: 48px; }
+@media (max-width: 760px) {
+  .energy-calculator-panel { padding: 16px; }
+}
