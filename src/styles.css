@@ -21,7 +21,7 @@ button { font: inherit; }
 .section-wrap { width: min(1160px, calc(100% - 48px)); margin-inline: auto; }
 .announcement { min-height: 34px; padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 9px; background: #f0eaff; color: #5430c5; font-size: 11px; font-weight: 700; letter-spacing: .02em; text-align: center; }
 .announcement-dot, .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #8b5cff; display: inline-block; }
-.site-header { position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,.94); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(235,232,243,.8); }
+.site-header { position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 10; background: rgba(255,255,255,.94); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(235,232,243,.8); }
 .nav-wrap { width: min(1240px, calc(100% - 48px)); min-height: 78px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; font-family: Manrope, sans-serif; font-size: 22px; line-height: 1; font-weight: 800; letter-spacing: -.9px; }
 .brand > span:last-child { position: relative; padding-bottom: 12px; }
