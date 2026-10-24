@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from "firebase/auth";
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, updateProfile } from "firebase/auth";
 import { auth, db } from "./firebase.js";
-import { addDoc, collection, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { addDoc, collection, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy, setDoc, getDoc } from "firebase/firestore";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -22,6 +22,7 @@ import {
   UserRound,
   LogOut,
   ShieldCheck,
+  Settings,
 } from "lucide-react";
 
 const tools = [
@@ -354,6 +355,13 @@ function App() {
   const [authMode, setAuthMode] = useState("login");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authUsername, setAuthUsername] = useState("");
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileUsername, setProfileUsername] = useState("");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
   const [authMessage, setAuthMessage] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
