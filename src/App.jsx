@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from "firebase/auth";
 import { auth } from "./firebase.js";
 import {
   ArrowDownRight,
@@ -391,7 +391,8 @@ function App() {
       provider.setCustomParameters({ prompt: "select_account" });
       const credential = await signInWithPopup(auth, provider);
       const displayName = credential.user.displayName || credential.user.email?.split("@")[0] || "there";
-      setWelcomeToast("Welcome back, " + displayName + "!");
+      const isNewUser = getAdditionalUserInfo(credential)?.isNewUser;
+      setWelcomeToast(isNewUser ? "Welcome to VoltCare — Engineering, Made Clear." : "Welcome back, " + displayName + "!");
       setAuthOpen(false);
       setAuthEmail("");
       setAuthPassword("");
