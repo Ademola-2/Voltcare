@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "./firebase.js";
 import {
   ArrowDownRight,
@@ -373,6 +373,27 @@ function App() {
       setAuthBusy(false);
     }
   };
+  const handleGoogleSignIn = async () => {
+    setAuthMessage("");
+    setAuthBusy(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      await signInWithPopup(auth, provider);
+      setAuthOpen(false);
+      setAuthEmail("");
+      setAuthPassword("");
+    } catch (error) {
+      const messages = {
+        "auth/popup-closed-by-user": "The Google sign-in window was closed before finishing.",
+        "auth/popup-blocked": "Your browser blocked the sign-in window. Allow pop-ups and try again.",
+        "auth/unauthorized-domain": "This website domain is not yet authorized in Firebase Authentication settings."
+      };
+      setAuthMessage(messages[error.code] || "Google sign-in failed. Please try again or use email and password.");
+    } finally {
+      setAuthBusy(false);
+    }
+  };
   const handleSignOut = async () => { try { await signOut(auth); } catch { setAuthMessage("Unable to sign out. Please try again."); } };
   const closeMenu = () => setMenuOpen(false);
 
@@ -387,7 +408,7 @@ function App() {
       <header className="site-header">
         <div className="nav-wrap">
           <Brand />
-          <div className="nav-account">{user ? <button className="account-button" type="button" onClick={handleSignOut} title="Sign out"><UserRound size={16} /><span>{user.email?.split("@")[0] || "Account"} · Sign out</span></button> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={16} /><span>Sign in</span></button>}</div>
+          <div className="nav-account">{user ? <button className="account-button signed-in-button" type="button" onClick={handleSignOut} title="Sign out"><UserRound size={17} /><span className="account-label">{user.displayName || user.email?.split("@")[0] || "Account"}</span><span className="signout-label">Sign out</span></button> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={17} /><span className="account-label">Sign in</span></button>}</div>
           <button className="theme-toggle" type="button" onClick={() => setDarkMode((current) => !current)} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}<span>{darkMode ? "Light" : "Dark"}</span></button>
           <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen}>
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -402,7 +423,7 @@ function App() {
         </div>
       </header>
 
-      {authOpen && <div className="auth-overlay" onClick={(event) => { if (event.target === event.currentTarget) setAuthOpen(false); }}><section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button className="auth-close" type="button" onClick={() => setAuthOpen(false)} aria-label="Close dialog"><X size={20} /></button><span className="section-kicker">YOUR VOLTCARE ACCOUNT</span><h2 id="auth-title">{authMode === "register" ? "Create your account" : "Welcome back"}</h2><p className="auth-intro">{authMode === "register" ? "Create an account with your email address." : "Sign in to your VoltCare account."}</p><form className="auth-form" onSubmit={submitAuth}><label htmlFor="auth-email">Email address</label><input id="auth-email" type="email" autoComplete="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required placeholder="you@example.com" /><label htmlFor="auth-password">Password</label><input id="auth-password" type="password" autoComplete={authMode === "register" ? "new-password" : "current-password"} minLength="6" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} required placeholder="At least 6 characters" />{authMessage && <p className="auth-message" role="alert">{authMessage}</p>}<button className="button button-primary auth-submit" type="submit" disabled={authBusy}>{authBusy ? "Please wait…" : authMode === "register" ? "Create account" : "Sign in"} <ArrowRight size={16} /></button></form><p className="auth-switch">{authMode === "register" ? "Already have an account?" : "New to VoltCare?"} <button type="button" onClick={() => { setAuthMode(authMode === "register" ? "login" : "register"); setAuthMessage(""); }}>{authMode === "register" ? "Sign in" : "Create account"}</button></p></section></div>}
+      {authOpen && <div className="auth-overlay" onClick={(event) => { if (event.target === event.currentTarget) setAuthOpen(false); }}><section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button className="auth-close" type="button" onClick={() => setAuthOpen(false)} aria-label="Close dialog"><X size={20} /></button><span className="section-kicker">YOUR VOLTCARE ACCOUNT</span><h2 id="auth-title">{authMode === "register" ? "Create your account" : "Welcome back"}</h2><p className="auth-intro">{authMode === "register" ? "Create an account with your email address." : "Sign in to your VoltCare account."}</p><button className="google-auth-button" type="button" onClick={handleGoogleSignIn} disabled={authBusy}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button><div className="auth-divider"><span>or continue with email</span></div><form className="auth-form" onSubmit={submitAuth}><label htmlFor="auth-email">Email address</label><input id="auth-email" type="email" autoComplete="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required placeholder="you@example.com" /><label htmlFor="auth-password">Password</label><input id="auth-password" type="password" autoComplete={authMode === "register" ? "new-password" : "current-password"} minLength="6" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} required placeholder="At least 6 characters" />{authMessage && <p className="auth-message" role="alert">{authMessage}</p>}<button className="button button-primary auth-submit" type="submit" disabled={authBusy}>{authBusy ? "Please wait…" : authMode === "register" ? "Create account" : "Sign in"} <ArrowRight size={16} /></button></form><p className="auth-switch">{authMode === "register" ? "Already have an account?" : "New to VoltCare?"} <button type="button" onClick={() => { setAuthMode(authMode === "register" ? "login" : "register"); setAuthMessage(""); }}>{authMode === "register" ? "Sign in" : "Create account"}</button></p></section></div>}
       <main>
         <section className="hero section-wrap">
           <div className="hero-copy">
