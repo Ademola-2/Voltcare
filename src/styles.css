@@ -566,3 +566,33 @@ h1, h2, h3 { font-family: Manrope, sans-serif; }
   .account-dropdown { top: calc(100% + 8px); right: -42px; }
   .welcome-toast { top: 88px; right: 12px; width: calc(100vw - 24px); padding: 12px; font-size: 12px; }
 }
+
+
+/* Saved calculations workspace and save actions */
+.save-calculation-button { margin-top: 14px; min-height: 42px; gap: 8px; }
+.save-calculation-button:disabled { opacity: .55; cursor: not-allowed; }
+.saved-calculations { padding-top: 48px; padding-bottom: 38px; }
+.saved-calculation-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.saved-calculation-card { min-width: 0; padding: 20px; border: 1px solid #e9e3f3; border-radius: 18px; background: #fff; box-shadow: 0 8px 25px rgba(35,20,67,.04); }
+.saved-card-top { display: flex; align-items: center; justify-content: space-between; }
+.saved-card-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #f0eaff; color: #6c3bff; }
+.saved-delete { width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 10px; background: #fff2f6; color: #a12c63; cursor: pointer; }
+.saved-delete:hover { background: #ffe3ed; }
+.saved-card-type { display: block; margin-top: 16px; color: #6c3bff; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; }
+.saved-calculation-card h3 { margin: 7px 0 5px; color: #211a31; font-size: 17px; }
+.saved-calculation-card > p { margin: 0; color: #817990; font-size: 11px; }
+.saved-card-values { display: grid; gap: 8px; margin-top: 16px; }
+.saved-card-values > span { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid #f0edf6; }
+.saved-card-values small { color: #797287; font-size: 11px; }
+.saved-card-values strong { color: #2b2240; font-size: 12px; text-align: right; overflow-wrap: anywhere; }
+.saved-empty { display: grid; justify-items: center; padding: 35px 18px; border: 1px dashed #d8cfea; border-radius: 18px; color: #7b718d; text-align: center; }
+.saved-empty > svg { color: #6c3bff; }
+.saved-empty h3 { margin: 12px 0 5px; color: #211a31; }
+.saved-empty p { margin: 0; font-size: 13px; }
+.dark-mode .saved-calculation-card { background: #1d1928; border-color: #393348; }
+.dark-mode .saved-calculation-card h3, .dark-mode .saved-card-values strong, .dark-mode .saved-empty h3 { color: #f6f3ff; }
+.dark-mode .saved-card-values > span { border-color: #393348; }
+.dark-mode .saved-empty { border-color: #514568; }
+.dark-mode .saved-delete { background: #392138; color: #ffb6d5; }
+@media (max-width: 850px) { .saved-calculation-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 560px) { .saved-calculation-grid { grid-template-columns: 1fr; } .saved-calculation-card { padding: 17px; } .saved-calculations { padding-top: 32px; } }
