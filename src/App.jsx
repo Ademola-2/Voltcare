@@ -19,6 +19,7 @@ import {
   X,
   Zap,
   UserRound,
+  LogOut,
 } from "lucide-react";
 
 const tools = [
@@ -416,7 +417,7 @@ function App() {
             <a className="nav-cta" href="#contact" onClick={closeMenu}>Get started <ArrowRight size={16} /></a>
           </nav>
           <div className="nav-actions">
-            <div className="nav-account">{user ? <button className="account-button signed-in-button" type="button" onClick={handleSignOut} title="Sign out"><UserRound size={17} /><span className="account-label">{user.displayName || user.email?.split("@")[0] || "Account"}</span><span className="signout-label">Sign out</span></button> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={17} /><span className="account-label">Sign in</span></button>}</div>
+            <div className="nav-account">{user ? <><div className="account-identity" title={user.email || "Signed in"}><UserRound size={17} /><span className="account-label">{user.displayName || user.email?.split("@")[0] || "Account"}</span></div><button className="logout-button" type="button" onClick={handleSignOut} title="Sign out" aria-label="Sign out"><LogOut size={16} /><span>Log out</span></button></> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={17} /><span className="account-label">Sign in</span></button>}</div>
             <button className="theme-toggle" type="button" onClick={() => setDarkMode((current) => !current)} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}<span>{darkMode ? "Light" : "Dark"}</span></button>
             <button className="menu-toggle" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen}>
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
