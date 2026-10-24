@@ -416,6 +416,46 @@ function App() {
     }
   };
   const handleSignOut = async () => { try { await signOut(auth); setUserMenuOpen(false); setWelcomeToast("You have been signed out."); } catch { setAuthMessage("Unable to sign out. Please try again."); } };
+  const openProfileSettings = async () => {
+    setUserMenuOpen(false);
+    setProfileMessage("");
+    setProfileName(user?.displayName || "");
+    setProfileUsername("");
+    setProfileOpen(true);
+    if (!user) return;
+    try {
+      const profileSnapshot = await getDoc(doc(db, "users", user.uid));
+      if (profileSnapshot.exists()) {
+        const profile = profileSnapshot.data();
+        setProfileName(profile.name || user.displayName || "");
+        setProfileUsername(profile.username || "");
+      }
+    } catch (error) {
+      console.error("Profile load failed:", error);
+      setProfileMessage("Profile details couldn't be loaded. Check your connection and Firestore rules.");
+    }
+  };
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    if (!user) return;
+    const cleanName = profileName.trim();
+    const cleanUsername = profileUsername.trim().replace(/^@/, "").toLowerCase();
+    if (cleanName.length < 2) { setProfileMessage("Name must be at least 2 characters."); return; }
+    if (!/^[a-z0-9_]{3,20}$/.test(cleanUsername)) { setProfileMessage("Username must be 3–20 characters and use only letters, numbers, and underscores."); return; }
+    setProfileBusy(true);
+    setProfileMessage("");
+    try {
+      await updateProfile(user, { displayName: cleanName });
+      await setDoc(doc(db, "users", user.uid), { name: cleanName, username: cleanUsername, email: user.email, updatedAt: serverTimestamp() }, { merge: true });
+      setUser({ ...auth.currentUser });
+      setProfileOpen(false);
+      setWelcomeToast("Your profile has been updated.");
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      setProfileMessage("Couldn't save your profile. Please check your Firestore rules and connection.");
+    } finally { setProfileBusy(false); }
+  };
+
   const saveCalculation = async (calculator, payload) => {
     if (!user) {
       setAuthMode("login");
@@ -493,6 +533,7 @@ function App() {
       </header>
 
       {welcomeToast && <div className="welcome-toast" role="status"><span className="welcome-toast-icon"><Check size={18} /></span><span>{welcomeToast}</span><button type="button" onClick={() => setWelcomeToast("")} aria-label="Dismiss message"><X size={16} /></button></div>}
+      {profileOpen && <div className="auth-overlay" onClick={(event) => { if (event.target === event.currentTarget) setProfileOpen(false); }}><section className="auth-dialog profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="auth-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close settings"><X size={20} /></button><span className="section-kicker">ACCOUNT SETTINGS</span><h2 id="profile-title">Edit your profile</h2><p className="auth-intro">Update the name and username shown on your VoltCare account.</p><form className="auth-form" onSubmit={saveProfile}><label htmlFor="profile-name">Full name</label><input id="profile-name" type="text" autoComplete="name" value={profileName} onChange={(e) => setProfileName(e.target.value)} required minLength="2" placeholder="Your name" /><label htmlFor="profile-username">Username</label><input id="profile-username" type="text" autoComplete="username" value={profileUsername} onChange={(e) => setProfileUsername(e.target.value)} required minLength="3" maxLength="20" pattern="[A-Za-z0-9_]{3,20}" title="Use 3–20 letters, numbers, or underscores" placeholder="your_username" /><small className="auth-field-hint">3–20 characters; letters, numbers, and underscores only.</small><label>Email address</label><input type="email" value={user?.email || ""} readOnly /><small className="auth-field-hint">Email changes are not available here yet.</small>{profileMessage && <p className="auth-message" role="alert">{profileMessage}</p>}<button className="button button-primary auth-submit" type="submit" disabled={profileBusy}>{profileBusy ? "Saving…" : "Save profile"} <Check size={16} /></button></form></section></div>}
       {authOpen && <div className="auth-overlay" onClick={(event) => { if (event.target === event.currentTarget) setAuthOpen(false); }}><section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button className="auth-close" type="button" onClick={() => setAuthOpen(false)} aria-label="Close dialog"><X size={20} /></button><span className="section-kicker">YOUR VOLTCARE ACCOUNT</span><h2 id="auth-title">{authMode === "register" ? "Create your account" : "Welcome back"}</h2><p className="auth-intro">{authMode === "register" ? "Create an account with your email address." : "Sign in to your VoltCare account."}</p><button className="google-auth-button" type="button" onClick={handleGoogleSignIn} disabled={authBusy}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button><div className="auth-divider"><span>or continue with email</span></div><form className="auth-form" onSubmit={submitAuth}><label htmlFor="auth-email">Email address</label><input id="auth-email" type="email" autoComplete="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required placeholder="you@example.com" /><label htmlFor="auth-password">Password</label><input id="auth-password" type="password" autoComplete={authMode === "register" ? "new-password" : "current-password"} minLength="6" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} required placeholder="At least 6 characters" />{authMessage && <p className="auth-message" role="alert">{authMessage}</p>}<button className="button button-primary auth-submit" type="submit" disabled={authBusy}>{authBusy ? "Please wait…" : authMode === "register" ? "Create account" : "Sign in"} <ArrowRight size={16} /></button></form><p className="auth-switch">{authMode === "register" ? "Already have an account?" : "New to VoltCare?"} <button type="button" onClick={() => { setAuthMode(authMode === "register" ? "login" : "register"); setAuthMessage(""); }}>{authMode === "register" ? "Sign in" : "Create account"}</button></p></section></div>}
       <main>
         <section className="hero section-wrap">
