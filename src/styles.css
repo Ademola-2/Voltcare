@@ -644,3 +644,12 @@ h1, h2, h3 { font-family: Manrope, sans-serif; }
   .admin-launch-card { padding:19px; }
 }
 @media(max-width:420px) { .dashboard-welcome { padding:18px; } .dashboard-avatar { width:46px; height:46px; border-radius:14px; } .dashboard-detail-row { flex-direction:column; gap:5px; } .dashboard-detail-row strong { text-align:left; } }
+
+/* Sign-up profile fields and account settings */
+.auth-field-hint { display:block; margin-top:-7px; color:#817990; font-size:11px; line-height:1.5; }
+.account-dropdown button { width:100%; display:flex; align-items:center; gap:9px; border:0; background:transparent; padding:11px 12px; color:#4c3a70; font-size:13px; font-weight:700; text-align:left; border-radius:9px; cursor:pointer; }
+.account-dropdown button:hover { background:#f4efff; }
+.dark-mode .account-dropdown button { color:#e8e0fa; }
+.dark-mode .account-dropdown button:hover { background:#302741; }
+.profile-dialog .auth-form input[readonly] { background:#f6f4fa; color:#80778f; cursor:not-allowed; }
+.dark-mode .profile-dialog .auth-form input[readonly] { background:#292432; color:#b7aec8; }
