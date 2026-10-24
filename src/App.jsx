@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from "firebase/auth";
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
+import { addDoc, collection, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -111,7 +112,7 @@ function solveElectrical(first, a, second, b) {
   return { values };
 }
 
-function ElectricalCalculator() {
+function ElectricalCalculator({ user, onSave }) {
   const [first, setFirst] = useState("voltage");
   const [second, setSecond] = useState("current");
   const [firstValue, setFirstValue] = useState("12");
@@ -164,6 +165,7 @@ function ElectricalCalculator() {
               {quantityOptions.map((item) => <div className="result-item" key={item.value}><span>{item.label}</span><strong>{format(result.values[item.value])} <small>{item.unit}</small></strong></div>)}
             </div>
           ) : <div className="result-placeholder"><Zap size={25} /><p>Enter two known values and tap <strong>Calculate values</strong> to see all four results here.</p></div>}
+          {result?.values && <button className="button button-secondary save-calculation-button" type="button" onClick={() => onSave("Electrical Calculator", { inputs: { first, firstValue: Number(firstValue), second, secondValue: Number(secondValue) }, results: result.values })} disabled={!user}>Save calculation <Check size={16} /></button>}
           <p className="formula-note">Uses V = I × R and P = V × I, with equivalent formulas as needed. Intended for basic DC/resistive circuit learning.</p>
         </div>
       </div>
@@ -173,7 +175,7 @@ function ElectricalCalculator() {
 }
 
 
-function LoadCalculator() {
+function LoadCalculator({ user, onSave }) {
   const [appliances, setAppliances] = useState([
     { id: 1, name: "LED bulbs", quantity: "4", watts: "10", hours: "6" },
     { id: 2, name: "Fan", quantity: "1", watts: "75", hours: "8" },
@@ -232,13 +234,14 @@ function LoadCalculator() {
           </div>
         ) : calculated ? <p className="calculator-error">Please enter a name, positive quantity, non-negative power, and daily hours from 0 to 24 for every appliance.</p> : <p className="load-hint">Update your appliance list, then tap “Calculate total load” to refresh the estimates.</p>}
       </div>
+      {calculated && valid && <button className="button button-secondary save-calculation-button" type="button" onClick={() => onSave("Load Calculator", { appliances, results: { totalConnectedLoadW: totalWatts, dailyEnergyKwh: dailyWh / 1000, monthlyEnergyKwh: dailyWh * 30 / 1000 } })} disabled={!user}>Save calculation <Check size={16} /></button>}
       <p className="calculator-disclaimer">Estimates use rated watts and user-entered hours. Actual consumption varies with operating conditions. Connected load is not the same as peak demand; motor starting current and suitable safety margins need separate assessment.</p>
     </section>
   );
 }
 
 
-function EnergyCalculator() {
+function EnergyCalculator({ user, onSave }) {
   const [power, setPower] = useState("100");
   const [hours, setHours] = useState("5");
   const [quantity, setQuantity] = useState("1");
@@ -276,6 +279,7 @@ function EnergyCalculator() {
               <div className="result-item"><span>Average power while operating</span><strong>{fmt(Number(power) * Number(quantity))} <small>W</small></strong></div>
             </div>
           ) : <div className="result-placeholder"><BatteryCharging size={25} /><p>Enter the appliance details and tap <strong>Calculate energy</strong> to estimate daily and period consumption.</p></div>}
+          {calculated && valuesValid && <button className="button button-secondary save-calculation-button" type="button" onClick={() => onSave("Energy Calculator", { inputs: { powerW: Number(power), hoursPerDay: Number(hours), quantity: Number(quantity), periodDays: Number(days) }, results: { dailyEnergyWh: dailyWh, dailyEnergyKwh: dailyWh / 1000, periodEnergyKwh: dailyWh * Number(days) / 1000, combinedPowerW: Number(power) * Number(quantity) } })} disabled={!user}>Save calculation <Check size={16} /></button>}
           <p className="formula-note">Energy (Wh) = power (W) × quantity × hours used. Divide Wh by 1,000 to convert to kWh.</p>
         </div>
       </div>
@@ -285,7 +289,7 @@ function EnergyCalculator() {
 }
 
 
-function SolarPlanner() {
+function SolarPlanner({ user, onSave }) {
   const [dailyKwh, setDailyKwh] = useState("5");
   const [sunHours, setSunHours] = useState("4.5");
   const [derating, setDerating] = useState("0.75");
@@ -352,6 +356,8 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [welcomeToast, setWelcomeToast] = useState("");
+  const [savedCalculations, setSavedCalculations] = useState([]);
+  const [saveBusy, setSaveBusy] = useState(false);
   useEffect(() => onAuthStateChanged(auth, (currentUser) => setUser(currentUser)), []);
   const submitAuth = async (event) => {
     event.preventDefault();
@@ -408,6 +414,52 @@ function App() {
     }
   };
   const handleSignOut = async () => { try { await signOut(auth); setUserMenuOpen(false); setWelcomeToast("You have been signed out."); } catch { setAuthMessage("Unable to sign out. Please try again."); } };
+  const saveCalculation = async (calculator, payload) => {
+    if (!user) {
+      setAuthMode("login");
+      setAuthMessage("Please sign in to save your calculations.");
+      setAuthOpen(true);
+      return;
+    }
+    setSaveBusy(true);
+    try {
+      await addDoc(collection(db, "users", user.uid, "savedCalculations"), {
+        calculator,
+        payload,
+        createdAt: serverTimestamp()
+      });
+      setWelcomeToast("Calculation saved successfully.");
+      await loadSavedCalculations(user.uid);
+    } catch (error) {
+      console.error("Save calculation failed:", error);
+      setWelcomeToast("Couldn't save this calculation. Please check your connection and Firestore rules.");
+    } finally {
+      setSaveBusy(false);
+    }
+  };
+  const loadSavedCalculations = async (uid) => {
+    try {
+      const savedQuery = query(collection(db, "users", uid, "savedCalculations"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(savedQuery);
+      setSavedCalculations(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+    } catch (error) {
+      console.error("Loading saved calculations failed:", error);
+    }
+  };
+  const deleteSavedCalculation = async (id) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "savedCalculations", id));
+      setSavedCalculations((items) => items.filter((item) => item.id !== id));
+      setWelcomeToast("Saved calculation deleted.");
+    } catch (error) {
+      setWelcomeToast("Couldn't delete this calculation. Please try again.");
+    }
+  };
+  useEffect(() => {
+    if (user) loadSavedCalculations(user.uid);
+    else setSavedCalculations([]);
+  }, [user]);
   const closeMenu = () => setMenuOpen(false);
 
   return (
@@ -501,13 +553,17 @@ function App() {
           <div className="tools-note"><span className="note-icon"><CircleHelp size={18} /></span><p><strong>Built around clarity, not guesswork.</strong> Results will show their assumptions and limitations. Installation decisions should always account for local electrical codes and qualified professional advice.</p></div>
         </section>
 
-        <ElectricalCalculator />
+        {user && <section className="saved-calculations section-wrap" id="my-calculations">
+          <div className="section-heading"><div><span className="section-kicker">YOUR WORKSPACE</span><h2>My calculations.</h2></div><p>Your saved estimates, available whenever you sign in to your VoltCare account.</p></div>
+          {savedCalculations.length ? <div className="saved-calculation-grid">{savedCalculations.map((item) => <article className="saved-calculation-card" key={item.id}><div className="saved-card-top"><span className="saved-card-icon"><Zap size={18} /></span><button type="button" className="saved-delete" onClick={() => deleteSavedCalculation(item.id)} aria-label="Delete saved calculation"><X size={16} /></button></div><span className="saved-card-type">{item.calculator}</span><h3>{item.payload?.title || item.calculator + " result"}</h3><p>{item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : "Just saved"}</p><div className="saved-card-values">{Object.entries(item.payload?.results || {}).slice(0,3).map(([key,value]) => <span key={key}><small>{key.replace(/([A-Z])/g," $1").replace(/^./,m=>m.toUpperCase())}</small><strong>{typeof value === "number" ? Number(value.toPrecision(5)).toLocaleString() : String(value)}</strong></span>)}</div></article>)}</div> : <div className="saved-empty"><BookOpen size={24} /><h3>No saved calculations yet</h3><p>Calculate a result below, then tap “Save calculation” to keep it here.</p></div>}
+        </section>}
+        <ElectricalCalculator user={user} onSave={saveCalculation} />
 
-        <LoadCalculator />
+        <LoadCalculator user={user} onSave={saveCalculation} />
 
-        <EnergyCalculator />
+        <EnergyCalculator user={user} onSave={saveCalculation} />
 
-        <SolarPlanner />
+        <SolarPlanner user={user} onSave={saveCalculation} />
 
         <section className="how-section" id="how-it-works">
           <div className="section-wrap how-inner">
