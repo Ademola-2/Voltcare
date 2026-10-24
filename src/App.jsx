@@ -408,11 +408,6 @@ function App() {
       <header className="site-header">
         <div className="nav-wrap">
           <Brand />
-          <div className="nav-account">{user ? <button className="account-button signed-in-button" type="button" onClick={handleSignOut} title="Sign out"><UserRound size={17} /><span className="account-label">{user.displayName || user.email?.split("@")[0] || "Account"}</span><span className="signout-label">Sign out</span></button> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={17} /><span className="account-label">Sign in</span></button>}</div>
-          <button className="theme-toggle" type="button" onClick={() => setDarkMode((current) => !current)} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}<span>{darkMode ? "Light" : "Dark"}</span></button>
-          <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen}>
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
           <nav className={menuOpen ? "main-nav is-open" : "main-nav"} aria-label="Main navigation">
             <a href="#home" onClick={closeMenu}>Home</a>
             <a href="#tools" onClick={closeMenu}>Tools</a>
@@ -420,6 +415,13 @@ function App() {
             <a href="#learn" onClick={closeMenu}>Learn</a>
             <a className="nav-cta" href="#contact" onClick={closeMenu}>Get started <ArrowRight size={16} /></a>
           </nav>
+          <div className="nav-actions">
+            <div className="nav-account">{user ? <button className="account-button signed-in-button" type="button" onClick={handleSignOut} title="Sign out"><UserRound size={17} /><span className="account-label">{user.displayName || user.email?.split("@")[0] || "Account"}</span><span className="signout-label">Sign out</span></button> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={17} /><span className="account-label">Sign in</span></button>}</div>
+            <button className="theme-toggle" type="button" onClick={() => setDarkMode((current) => !current)} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}<span>{darkMode ? "Light" : "Dark"}</span></button>
+            <button className="menu-toggle" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen}>
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
       </header>
 
