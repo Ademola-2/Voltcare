@@ -336,6 +336,7 @@ function SolarPlanner({ user, onSave }) {
               <div className="result-item"><span>Daily energy entered</span><strong>{fmt(energy)} <small>kWh/day</small></strong></div>
             </div>
           ) : <div className="result-placeholder"><Sun size={25} /><p>Enter your energy needs and planning assumptions, then tap <strong>Estimate solar system</strong>.</p></div>}
+          {calculated && valid && <button className="button button-secondary save-calculation-button" type="button" onClick={() => onSave("Solar Planner", { inputs: { dailyEnergyKwh: energy, peakSunHours: sun, deratingFactor: lossFactor, backupDays: days, usableBatteryFraction: dod, inverterEfficiency: inverterEff, batteryVoltageV: batteryVoltage }, results: { estimatedArrayWp: panelWatts, estimatedBatteryWh: batteryWh, estimatedBatteryAh: batteryAh } })} disabled={!user}>Save calculation <Check size={16} /></button>}
           <p className="formula-note">Array estimate = daily Wh ÷ (peak sun hours × derating factor). Battery estimate includes backup days, usable battery fraction, and inverter efficiency.</p>
         </div>
       </div>
