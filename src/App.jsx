@@ -350,14 +350,23 @@ function App() {
   const [authPassword, setAuthPassword] = useState("");
   const [authMessage, setAuthMessage] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [welcomeToast, setWelcomeToast] = useState("");
   useEffect(() => onAuthStateChanged(auth, (currentUser) => setUser(currentUser)), []);
   const submitAuth = async (event) => {
     event.preventDefault();
     setAuthMessage("");
     setAuthBusy(true);
     try {
-      if (authMode === "register") await createUserWithEmailAndPassword(auth, authEmail.trim(), authPassword);
-      else await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword);
+      let credential;
+      if (authMode === "register") {
+        credential = await createUserWithEmailAndPassword(auth, authEmail.trim(), authPassword);
+        setWelcomeToast("Welcome to VoltCare — Engineering, Made Clear.");
+      } else {
+        credential = await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword);
+        const displayName = credential.user.displayName || credential.user.email?.split("@")[0] || "there";
+        setWelcomeToast("Welcome back, " + displayName + "!");
+      }
       setAuthOpen(false);
       setAuthEmail("");
       setAuthPassword("");
@@ -380,7 +389,9 @@ function App() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
-      await signInWithPopup(auth, provider);
+      const credential = await signInWithPopup(auth, provider);
+      const displayName = credential.user.displayName || credential.user.email?.split("@")[0] || "there";
+      setWelcomeToast("Welcome back, " + displayName + "!");
       setAuthOpen(false);
       setAuthEmail("");
       setAuthPassword("");
@@ -395,7 +406,7 @@ function App() {
       setAuthBusy(false);
     }
   };
-  const handleSignOut = async () => { try { await signOut(auth); } catch { setAuthMessage("Unable to sign out. Please try again."); } };
+  const handleSignOut = async () => { try { await signOut(auth); setUserMenuOpen(false); setWelcomeToast("You have been signed out."); } catch { setAuthMessage("Unable to sign out. Please try again."); } };
   const closeMenu = () => setMenuOpen(false);
 
   return (
@@ -417,7 +428,7 @@ function App() {
             <a className="nav-cta" href="#contact" onClick={closeMenu}>Get started <ArrowRight size={16} /></a>
           </nav>
           <div className="nav-actions">
-            <div className="nav-account">{user ? <><div className="account-identity" title={user.email || "Signed in"}><UserRound size={17} /><span className="account-label">{user.displayName || user.email?.split("@")[0] || "Account"}</span></div><button className="logout-button" type="button" onClick={handleSignOut} title="Sign out" aria-label="Sign out"><LogOut size={16} /><span>Log out</span></button></> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={17} /><span className="account-label">Sign in</span></button>}</div>
+            <div className="nav-account">{user ? <div className="account-menu-wrap"><button className="account-identity" type="button" onClick={() => setUserMenuOpen((open) => !open)} aria-expanded={userMenuOpen} aria-haspopup="true" title={user.email || "Signed in"}><UserRound size={17} /><span className="account-label">{user.displayName || user.email?.split("@")[0] || "Account"}</span><ChevronDown size={14} className={userMenuOpen ? "account-chevron is-open" : "account-chevron"} /></button>{userMenuOpen && <div className="account-dropdown"><span className="dropdown-user-email">{user.email}</span><button type="button" onClick={handleSignOut}><LogOut size={16} /> Log out</button></div>}</div> : <button className="account-button" type="button" onClick={() => { setAuthMode("login"); setAuthMessage(""); setAuthOpen(true); }}><UserRound size={17} /><span className="account-label">Sign in</span></button>}</div>
             <button className="theme-toggle" type="button" onClick={() => setDarkMode((current) => !current)} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}<span>{darkMode ? "Light" : "Dark"}</span></button>
             <button className="menu-toggle" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen}>
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -426,6 +437,7 @@ function App() {
         </div>
       </header>
 
+      {welcomeToast && <div className="welcome-toast" role="status"><span className="welcome-toast-icon"><Check size={18} /></span><span>{welcomeToast}</span><button type="button" onClick={() => setWelcomeToast("")} aria-label="Dismiss message"><X size={16} /></button></div>}
       {authOpen && <div className="auth-overlay" onClick={(event) => { if (event.target === event.currentTarget) setAuthOpen(false); }}><section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button className="auth-close" type="button" onClick={() => setAuthOpen(false)} aria-label="Close dialog"><X size={20} /></button><span className="section-kicker">YOUR VOLTCARE ACCOUNT</span><h2 id="auth-title">{authMode === "register" ? "Create your account" : "Welcome back"}</h2><p className="auth-intro">{authMode === "register" ? "Create an account with your email address." : "Sign in to your VoltCare account."}</p><button className="google-auth-button" type="button" onClick={handleGoogleSignIn} disabled={authBusy}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button><div className="auth-divider"><span>or continue with email</span></div><form className="auth-form" onSubmit={submitAuth}><label htmlFor="auth-email">Email address</label><input id="auth-email" type="email" autoComplete="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required placeholder="you@example.com" /><label htmlFor="auth-password">Password</label><input id="auth-password" type="password" autoComplete={authMode === "register" ? "new-password" : "current-password"} minLength="6" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} required placeholder="At least 6 characters" />{authMessage && <p className="auth-message" role="alert">{authMessage}</p>}<button className="button button-primary auth-submit" type="submit" disabled={authBusy}>{authBusy ? "Please wait…" : authMode === "register" ? "Create account" : "Sign in"} <ArrowRight size={16} /></button></form><p className="auth-switch">{authMode === "register" ? "Already have an account?" : "New to VoltCare?"} <button type="button" onClick={() => { setAuthMode(authMode === "register" ? "login" : "register"); setAuthMessage(""); }}>{authMode === "register" ? "Sign in" : "Create account"}</button></p></section></div>}
       <main>
         <section className="hero section-wrap">
