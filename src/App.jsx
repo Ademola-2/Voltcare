@@ -21,6 +21,7 @@ import {
   Zap,
   UserRound,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 
 const tools = [
@@ -553,6 +554,43 @@ function App() {
           </div>
           <div className="tools-note"><span className="note-icon"><CircleHelp size={18} /></span><p><strong>Built around clarity, not guesswork.</strong> Results will show their assumptions and limitations. Installation decisions should always account for local electrical codes and qualified professional advice.</p></div>
         </section>
+
+        {user && <section className="user-dashboard section-wrap" id="dashboard">
+          <div className="dashboard-welcome">
+            <div>
+              <span className="section-kicker">YOUR VOLTCARE ACCOUNT</span>
+              <h2>Welcome back, {user.displayName || user.email?.split("@")[0] || "there"}.</h2>
+              <p>Your personal space for electrical estimates and energy planning.</p>
+            </div>
+            <span className="dashboard-avatar"><UserRound size={27} /></span>
+          </div>
+          <div className="dashboard-stat-grid">
+            <article className="dashboard-stat-card"><span className="dashboard-stat-icon"><BookOpen size={19} /></span><span className="dashboard-stat-label">Saved calculations</span><strong>{savedCalculations.length}</strong><small>Available in your workspace</small></article>
+            <article className="dashboard-stat-card"><span className="dashboard-stat-icon"><Zap size={19} /></span><span className="dashboard-stat-label">Calculator tools</span><strong>4</strong><small>Electrical, load, energy &amp; solar</small></article>
+            <article className="dashboard-stat-card"><span className="dashboard-stat-icon"><Check size={19} /></span><span className="dashboard-stat-label">Account status</span><strong>Active</strong><small>Signed in securely with Firebase</small></article>
+          </div>
+          <div className="dashboard-lower-grid">
+            <article className="dashboard-info-card">
+              <span className="section-kicker">ACCOUNT DETAILS</span>
+              <h3>Your profile</h3>
+              <div className="dashboard-detail-row"><span>Name</span><strong>{user.displayName || "Not provided"}</strong></div>
+              <div className="dashboard-detail-row"><span>Email</span><strong>{user.email || "Not available"}</strong></div>
+              <div className="dashboard-detail-row"><span>Account created</span><strong>{user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "—"}</strong></div>
+            </article>
+            <article className="dashboard-info-card">
+              <span className="section-kicker">QUICK ACTIONS</span>
+              <h3>What would you like to do?</h3>
+              <a className="dashboard-action-link" href="#electrical-calculator"><span><PlugZap size={18} /> Electrical calculator</span><ArrowRight size={16} /></a>
+              <a className="dashboard-action-link" href="#load-calculator"><span><Zap size={18} /> Load calculator</span><ArrowRight size={16} /></a>
+              <a className="dashboard-action-link" href="#solar-planner"><span><Sun size={18} /> Solar planner</span><ArrowRight size={16} /></a>
+              <a className="dashboard-action-link" href="#my-calculations"><span><BookOpen size={18} /> View saved calculations</span><ArrowRight size={16} /></a>
+            </article>
+          </div>
+          {user.email?.toLowerCase() === "ademolacoder001@gmail.com" && <article className="admin-launch-card">
+            <div><span className="section-kicker">ADMINISTRATOR ACCESS</span><h3>VoltCare Admin Workspace</h3><p>This account is on the planned administrator allowlist. The management tools will be enabled after server-side authorization and Firestore rules are configured.</p></div>
+            <span className="admin-launch-icon"><ShieldCheck size={25} /></span>
+          </article>}
+        </section>}
 
         {user && <section className="saved-calculations section-wrap" id="my-calculations">
           <div className="section-heading"><div><span className="section-kicker">YOUR WORKSPACE</span><h2>My calculations.</h2></div><p>Your saved estimates, available whenever you sign in to your VoltCare account.</p></div>
