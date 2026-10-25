@@ -664,3 +664,27 @@ h1, h2, h3 { font-family: Manrope, sans-serif; }
 .admin-user-list,.admin-lesson-list{display:grid;max-height:420px;overflow:auto}.admin-user-list article,.admin-lesson-list article{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border,#e8e4f0);min-width:0}.admin-user-list article:last-child,.admin-lesson-list article:last-child{border:0}.admin-user-avatar{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;background:#eee8ff;color:#6c3bff;border-radius:50%}.admin-user-list article div,.admin-lesson-list article div{display:grid;gap:4px;min-width:0}.admin-user-list strong,.admin-lesson-list strong{overflow-wrap:anywhere}.admin-user-list small,.admin-lesson-list small{color:var(--muted,#716d80);font-size:12px;overflow-wrap:anywhere}.admin-lesson-list article{justify-content:space-between}.admin-lesson-list article button{border:1px solid var(--border,#e8e4f0);background:transparent;color:inherit;border-radius:9px;padding:8px}.admin-message{background:#f0ebff;color:#5130b5;border-radius:11px;padding:11px 13px;font-size:14px}.admin-empty{color:var(--muted,#716d80);font-size:14px}.admin-security-note{display:flex;gap:8px;align-items:flex-start;color:var(--muted,#716d80);font-size:12px;line-height:1.6;margin-top:16px}.admin-security-note svg{flex:0 0 auto;color:#6c3bff}
 .dark-mode .admin-workspace{--surface:#211b30;--card:#211b30;--text:#f7f4ff;--muted:#b9b0cb;--border:#40364f}.dark-mode .admin-lesson-form input,.dark-mode .admin-lesson-form select,.dark-mode .admin-lesson-form textarea{background:#171321}
 @media(max-width:760px){.admin-overlay{padding:7px}.admin-workspace{margin:3px auto 18px;border-radius:16px;padding:14px}.admin-stat-grid{grid-template-columns:1fr 1fr}.admin-stat-grid article:last-child{grid-column:1/-1}.admin-content-grid{grid-template-columns:1fr}.admin-workspace-header h2{font-size:28px}}
+
+
+/* Full lesson reader experience */
+.lesson-card-interactive { display:flex; flex-direction:column; align-items:flex-start; }
+.lesson-read-button { margin-top:auto; padding-top:17px; border:0; background:transparent; font:inherit; cursor:pointer; }
+.lesson-read-button:hover { color:#5123e8; }
+.lesson-reader-overlay { position:fixed; inset:0; z-index:1500; display:flex; align-items:flex-start; justify-content:center; padding:18px; overflow-y:auto; background:rgba(17,12,32,.76); backdrop-filter:blur(8px); }
+.lesson-reader { width:min(760px,100%); margin:auto; padding:clamp(22px,5vw,42px); border:1px solid #e5ddf6; border-radius:24px; background:#fff; color:#211a31; box-shadow:0 30px 90px rgba(0,0,0,.3); }
+.lesson-reader-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.lesson-reader-close { width:42px; height:42px; display:grid; place-items:center; flex:0 0 auto; border:1px solid #e9e3f3; border-radius:12px; background:#fff; color:#4c3a70; cursor:pointer; }
+.lesson-reader-category { display:inline-block; margin-top:22px; color:#6c3bff; font-size:11px; font-weight:850; letter-spacing:1.2px; text-transform:uppercase; }
+.lesson-reader h2 { margin:9px 0 12px; font-size:clamp(30px,6vw,44px); line-height:1.1; letter-spacing:-1.4px; }
+.lesson-reader-summary { color:#716d80; font-size:16px; line-height:1.7; }
+.lesson-reader-formula { margin:22px 0; padding:19px; border:1px solid #e2d8ff; border-radius:15px; background:#f6f2ff; color:#5b2de1; text-align:center; font-size:clamp(21px,4vw,30px); font-weight:850; }
+.lesson-reader-body { margin-top:22px; color:#494258; font-size:15px; line-height:1.85; overflow-wrap:anywhere; }
+.lesson-reader-body p { margin:0 0 14px; white-space:pre-wrap; }
+.lesson-reader-footer { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:28px; padding-top:20px; border-top:1px solid #eee9f6; }
+.lesson-reader-footer > span { display:flex; align-items:center; gap:8px; color:#817990; font-size:12px; }
+.dark-mode .lesson-reader { background:#211b30; color:#f7f4ff; border-color:#40364f; }
+.dark-mode .lesson-reader-close { background:#171321; border-color:#40364f; color:#f7f4ff; }
+.dark-mode .lesson-reader-summary,.dark-mode .lesson-reader-body { color:#c5bdd5; }
+.dark-mode .lesson-reader-formula { background:#2b2142; border-color:#493b65; color:#d6c5ff; }
+.dark-mode .lesson-reader-footer { border-color:#40364f; }
+@media(max-width:520px) { .lesson-reader-overlay { padding:8px; } .lesson-reader { padding:20px; border-radius:18px; } .lesson-reader-footer { align-items:stretch; flex-direction:column; } .lesson-reader-footer .button { justify-content:center; } }
