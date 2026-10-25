@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, updateProfile } from "firebase/auth";
 import { auth, db } from "./firebase.js";
-import { addDoc, collection, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy, setDoc, getDoc } from "firebase/firestore";
+import { addDoc, collection, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy, setDoc, getDoc, where } from "firebase/firestore";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -371,6 +371,7 @@ function App() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminLessons, setAdminLessons] = useState([]);
+  const [publishedLessons, setPublishedLessons] = useState([]);
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonCategory, setLessonCategory] = useState("Electrical basics");
   const [lessonSummary, setLessonSummary] = useState("");
@@ -379,6 +380,7 @@ function App() {
   const [adminBusy, setAdminBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   useEffect(() => onAuthStateChanged(auth, (currentUser) => setUser(currentUser)), []);
+  useEffect(() => { let active = true; const loadPublishedLessons = async () => { try { const snap = await getDocs(query(collection(db, "lessons"), where("published", "==", true))); const items = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)); if (active) setPublishedLessons(items); } catch (e) { console.error("Could not load published lessons", e); } }; loadPublishedLessons(); return () => { active = false; }; }, []);
   useEffect(() => { let active = true; const check = async () => { setIsAdmin(false); setAdminOpen(false); if (!user) return; try { const snap = await getDoc(doc(db, "admins", user.uid)); if (active) setIsAdmin(snap.exists() && snap.data()?.role === "admin"); } catch (e) { console.error("Admin check failed", e); if (active) setIsAdmin(false); } }; check(); return () => { active = false; }; }, [user]);
   const openAdminWorkspace = async () => { if (!user || !isAdmin) return; setAdminOpen(true); setAdminMessage(""); setAdminBusy(true); try { const [us, ls] = await Promise.all([getDocs(query(collection(db, "users"), orderBy("createdAt", "desc"))), getDocs(query(collection(db, "lessons"), orderBy("createdAt", "desc")))]); setAdminUsers(us.docs.map(d => ({ id: d.id, ...d.data() }))); setAdminLessons(ls.docs.map(d => ({ id: d.id, ...d.data() }))); } catch (e) { console.error(e); setAdminMessage("Could not load data. Confirm Firestore rules are published."); } finally { setAdminBusy(false); } };
   const publishLesson = async (event) => { event.preventDefault(); if (!user || !isAdmin || !lessonTitle.trim() || !lessonSummary.trim() || !lessonBody.trim()) return; setAdminBusy(true); setAdminMessage(""); try { const ref = await addDoc(collection(db, "lessons"), { title: lessonTitle.trim(), category: lessonCategory, summary: lessonSummary.trim(), body: lessonBody.trim(), published: true, createdBy: user.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }); setAdminLessons(items => [{ id: ref.id, title: lessonTitle.trim(), category: lessonCategory, summary: lessonSummary.trim(), body: lessonBody.trim(), published: true }, ...items]); setLessonTitle(""); setLessonSummary(""); setLessonBody(""); setAdminMessage("Lesson published successfully."); } catch (e) { console.error(e); setAdminMessage("Could not publish. Check Firestore rules and connection."); } finally { setAdminBusy(false); } };
@@ -694,6 +696,7 @@ function App() {
             <article className="lesson-card"><span className="lesson-number">LESSON 02 · POWER</span><h3>Electrical Power</h3><p>Power tells you how quickly electrical energy is transferred or used.</p><div className="lesson-formula">P = V × I</div><div className="lesson-example"><strong>Worked example</strong><p>A device operating at 12 V and 2 A uses P = 12 × 2 = <strong>24 W</strong>.</p></div><a className="text-link" href="#electrical-calculator">Practise with calculator <ArrowRight size={15} /></a></article>
             <article className="lesson-card"><span className="lesson-number">LESSON 03 · ENERGY</span><h3>Energy Consumption</h3><p>Electrical energy depends on power and how long equipment runs.</p><div className="lesson-formula">E (Wh) = P (W) × t (h)</div><div className="lesson-example"><strong>Worked example</strong><p>A 100 W fan used for 5 hours consumes 100 × 5 = 500 Wh, or <strong>0.5 kWh</strong>.</p></div><a className="text-link" href="#energy-calculator">Practise with calculator <ArrowRight size={15} /></a></article>
             <article className="lesson-card"><span className="lesson-number">LESSON 04 · SOLAR PLANNING</span><h3>Solar Array Basics</h3><p>A preliminary array estimate relates daily energy demand to sun hours and system losses.</p><div className="lesson-formula">Wp ≈ Wh ÷ (H × f)</div><div className="lesson-example"><strong>Worked example</strong><p>For 5,000 Wh/day, 5 peak-sun-hours and a 0.75 derating factor: 5,000 ÷ (5 × 0.75) ≈ <strong>1,333 Wp</strong>.</p></div><a className="text-link" href="#solar-planner">Try solar planner <ArrowRight size={15} /></a></article>
+            {publishedLessons.map((lesson, index) => <article className="lesson-card" key={lesson.id}><span className="lesson-number">COMMUNITY LESSON · {String(index + 1).padStart(2, "0")}</span><h3>{lesson.title}</h3><p>{lesson.summary}</p>{lesson.body && <div className="lesson-example"><strong>Lesson notes</strong><p style={{ whiteSpace: "pre-wrap" }}>{lesson.body}</p></div>}<span className="lesson-category">{lesson.category}</span></article>)}
           </div>
           <p className="learning-safety"><CircleHelp size={17} /> These lessons are introductory. Real installations require correct equipment ratings, protection, local-code compliance, and qualified assessment.</p>
         </section>
