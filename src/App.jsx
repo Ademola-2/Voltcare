@@ -347,6 +347,15 @@ function SolarPlanner({ user, onSave }) {
   );
 }
 
+
+const quizQuestions = [
+  { question: "Which formula represents Ohm’s Law?", options: ["V = I × R", "P = V + I", "R = V × I", "I = V × R"], answer: 0, explanation: "Voltage equals current multiplied by resistance: V = I × R." },
+  { question: "A 12 V supply drives 2 A through a load. What is the power?", options: ["6 W", "10 W", "24 W", "14 W"], answer: 2, explanation: "Power is voltage × current, so 12 × 2 = 24 W." },
+  { question: "What unit is commonly used for electrical energy consumption on utility bills?", options: ["Ampere", "Kilowatt-hour (kWh)", "Ohm", "Volt"], answer: 1, explanation: "Electrical energy consumption is commonly measured in kilowatt-hours (kWh)." },
+  { question: "What does peak sun hours help estimate in a solar plan?", options: ["Battery color", "Daily solar energy available", "Wire length only", "The inverter brand"], answer: 1, explanation: "Peak sun hours are used with daily energy demand and system losses to estimate PV array size." },
+  { question: "Before installing a real electrical or solar system, what should you do?", options: ["Use the estimate without checking", "Ignore protection devices", "Verify the design, ratings, and local requirements", "Choose the smallest cable"], answer: 2, explanation: "Calculator results are preliminary. Equipment ratings, protection, local codes, and qualified assessment matter." },
+];
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -383,6 +392,8 @@ function App() {
   const [adminMessage, setAdminMessage] = useState("");
   const [adminBusy, setAdminBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
   useEffect(() => onAuthStateChanged(auth, (currentUser) => setUser(currentUser)), []);
   useEffect(() => { if (!welcomeToast) return undefined; const timer = window.setTimeout(() => setWelcomeToast(""), 3500); return () => window.clearTimeout(timer); }, [welcomeToast]);
   useEffect(() => { if (!progressMessage) return undefined; const timer = window.setTimeout(() => setProgressMessage(""), 4000); return () => window.clearTimeout(timer); }, [progressMessage]);
@@ -712,6 +723,21 @@ function App() {
             {publishedLessons.map((lesson, index) => <article className="lesson-card lesson-card-interactive" key={lesson.id}><span className="lesson-number">COMMUNITY LESSON · {String(index + 1).padStart(2, "0")}</span><h3>{lesson.title}</h3><p>{lesson.summary}</p><span className="lesson-category">{lesson.category}</span><button className="text-link lesson-read-button" type="button" onClick={() => setSelectedLesson({ id: `community-${lesson.id}`, title: lesson.title, category: lesson.category, summary: lesson.summary, body: lesson.body || "", formula: lesson.formula || "" })}>Read full lesson <ArrowRight size={15} /></button></article>)}
           </div>
           <p className="learning-safety"><CircleHelp size={17} /> These lessons are introductory. Real installations require correct equipment ratings, protection, local-code compliance, and qualified assessment.</p>
+
+          <section className="quiz-panel" aria-labelledby="quiz-heading">
+            <div className="quiz-heading-row"><div><span className="section-kicker">QUICK KNOWLEDGE CHECK</span><h3 id="quiz-heading">Test what you’ve learned</h3><p>Answer five questions on electrical fundamentals and solar planning. You’ll see your score and explanations when you submit.</p></div><span className="quiz-badge"><Check size={14} /> 5 questions</span></div>
+            <form onSubmit={(event) => { event.preventDefault(); setQuizSubmitted(true); }}>
+              <div className="quiz-question-list">
+                {quizQuestions.map((item, index) => <fieldset className="quiz-question" key={item.question}>
+                  <legend><span>{String(index + 1).padStart(2, "0")}</span>{item.question}</legend>
+                  <div className="quiz-options">{item.options.map((option, optionIndex) => <label className={quizSubmitted && optionIndex === item.answer ? "quiz-option quiz-option-correct" : quizSubmitted && quizAnswers[index] === optionIndex && optionIndex !== item.answer ? "quiz-option quiz-option-wrong" : "quiz-option"} key={option}><input type="radio" name={`quiz-${index}`} value={optionIndex} checked={quizAnswers[index] === optionIndex} disabled={quizSubmitted} onChange={() => setQuizAnswers((current) => ({ ...current, [index]: optionIndex }))} /><span>{option}</span>{quizSubmitted && optionIndex === item.answer && <Check size={16} />}</label>)}</div>
+                  {quizSubmitted && <p className="quiz-explanation">{quizAnswers[index] === item.answer ? "Correct! " : "Review: "}{item.explanation}</p>}
+                </fieldset>)}
+              </div>
+              {quizSubmitted ? <div className="quiz-result" role="status"><div><span className="section-kicker">YOUR RESULT</span><strong>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length} / {quizQuestions.length}</strong><p>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length === quizQuestions.length ? "Excellent work — you’ve mastered this set!" : quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length >= 3 ? "Good effort! Review the explanations and try again." : "Keep learning. Read the lessons above, then give it another try."}</p></div><button className="button button-secondary" type="button" onClick={() => { setQuizAnswers({}); setQuizSubmitted(false); }}>Try again</button></div> : <div className="quiz-actions"><span>{Object.keys(quizAnswers).length} of {quizQuestions.length} answered</span><button className="button button-primary" type="submit" disabled={Object.keys(quizAnswers).length !== quizQuestions.length}>Submit answers <ArrowRight size={16} /></button></div>}
+            </form>
+          </section>
+
         </section>
 
         <section className="contact-section section-wrap" id="contact">
