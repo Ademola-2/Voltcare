@@ -446,6 +446,7 @@ function App() {
   const [adminMessage, setAdminMessage] = useState("");
   const [adminBusy, setAdminBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState(() => createQuiz());
   const [quizUsedIds, setQuizUsedIds] = useState([]);
   const [quizAnswers, setQuizAnswers] = useState({});
@@ -453,7 +454,7 @@ function App() {
   const [quizHistory, setQuizHistory] = useState([]);
   const [quizSaveMessage, setQuizSaveMessage] = useState("");
   const [quizSaveBusy, setQuizSaveBusy] = useState(false);
-  const startNewQuiz = () => { const excluded = [...new Set([...quizUsedIds, ...quizQuestions.map((item) => item.id)])]; const nextQuiz = createQuiz(excluded); setQuizQuestions(nextQuiz); setQuizUsedIds(nextQuiz.map((item) => item.id)); setQuizAnswers({}); setQuizSubmitted(false); setQuizSaveMessage(""); };
+  const startNewQuiz = () => { const excluded = [...new Set([...quizUsedIds, ...quizQuestions.map((item) => item.id)])]; const nextQuiz = createQuiz(excluded); setQuizQuestions(nextQuiz); setQuizUsedIds(nextQuiz.map((item) => item.id)); setQuizAnswers({}); setQuizSubmitted(false); setQuizSaveMessage(""); setQuizStarted(true); window.setTimeout(() => document.getElementById("lesson-quiz")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); };
   const quizScore = quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length;
   const submitQuiz = async (event) => {
     event.preventDefault();
@@ -835,9 +836,9 @@ function App() {
           </div>
           <p className="learning-safety"><CircleHelp size={17} /> These lessons are introductory. Real installations require correct equipment ratings, protection, local-code compliance, and qualified assessment.</p>
 
-          <section className="quiz-panel" aria-labelledby="quiz-heading">
-            <div className="quiz-heading-row"><div><span className="section-kicker">QUICK KNOWLEDGE CHECK</span><h3 id="quiz-heading">Test what you’ve learned</h3><p>Answer ten randomized questions on electrical fundamentals, energy, battery planning, solar, and safety. You’ll see your score and explanations when you submit.</p></div><span className="quiz-badge"><Check size={14} /> 10 questions</span></div>
-            <form onSubmit={submitQuiz}>
+          <section className="quiz-panel" aria-labelledby="quiz-heading" id="lesson-quiz">
+            {!quizStarted ? <div className="quiz-heading-row"><div><span className="section-kicker">READY WHEN YOU ARE</span><h3 id="quiz-heading">Test yourself on the lessons</h3><p>Finish reading a lesson first. When you’re ready, start a quiz to check what you remember.</p></div><span className="quiz-badge"><BookOpen size={14} /> Practice</span></div> : <div className="quiz-heading-row"><div><span className="section-kicker">QUICK KNOWLEDGE CHECK</span><h3 id="quiz-heading">Test what you’ve learned</h3><p>Answer ten randomized questions. You’ll see your score and explanations when you submit.</p></div><span className="quiz-badge"><Check size={14} /> 10 questions</span></div>}
+            {!quizStarted ? <div className="quiz-actions"><span>{Object.values(lessonProgress).filter((item) => item?.completed).length} lessons completed</span><button className="button button-primary" type="button" onClick={startNewQuiz} disabled={!Object.values(lessonProgress).some((item) => item?.completed)}>Test yourself on the lessons <ArrowRight size={16} /></button></div> : <form onSubmit={submitQuiz}>
               <div className="quiz-question-list">
                 {quizQuestions.map((item, index) => <fieldset className="quiz-question" key={item.id}>
                   <legend><span>{String(index + 1).padStart(2, "0")}</span>{item.question}</legend>
@@ -846,7 +847,7 @@ function App() {
                 </fieldset>)}
               </div>
               {quizSubmitted ? <><div className="quiz-result" role="status"><div><span className="section-kicker">YOUR RESULT</span><strong>{quizScore} / {quizQuestions.length}</strong><p>{quizScore === quizQuestions.length ? "Excellent work — you’ve mastered this set!" : quizScore >= 7 ? "Good effort! Review the explanations and try again." : "Keep learning. Read the lessons above, then give it another try."}</p></div><button className="button button-secondary" type="button" onClick={startNewQuiz}>Try another set</button></div>{quizSaveMessage && <p className="quiz-save-feedback" role="status">{quizSaveBusy ? "Saving your score…" : quizSaveMessage}</p>}</> : <div className="quiz-actions"><span>{Object.keys(quizAnswers).length} of {quizQuestions.length} answered</span><button className="button button-primary" type="submit" disabled={Object.keys(quizAnswers).length !== quizQuestions.length}>Submit answers <ArrowRight size={16} /></button></div>}
-            </form>
+            </form>}
             {user && <article className="quiz-history-panel quiz-history-inline">
               <div className="learning-progress-heading"><span className="dashboard-stat-icon"><Check size={19} /></span><div><span className="dashboard-stat-label">YOUR PERFORMANCE</span><h3>Quiz history &amp; stats</h3><p>{quizHistory.length} attempt{quizHistory.length === 1 ? "" : "s"} saved · average {quizHistory.length ? Math.round(quizHistory.reduce((sum, item) => sum + Number(item.percentage ?? (item.score / item.total) * 100), 0) / quizHistory.length) : 0}% · best {quizHistory.length ? Math.max(...quizHistory.map((item) => Number(item.percentage ?? (item.score / item.total) * 100))) : 0}%</p></div></div>
               {quizHistory.length ? <div className="quiz-history-list">{quizHistory.slice(0, 5).map((attempt) => <div className="quiz-history-row" key={attempt.id}><span><strong>{attempt.score}/{attempt.total}</strong><small>{new Date(attempt.completedAt).toLocaleDateString()}</small></span><span className="quiz-history-bar"><i style={{ width: `${attempt.percentage ?? Math.round(attempt.score / attempt.total * 100)}%` }} /></span><b>{attempt.percentage ?? Math.round(attempt.score / attempt.total * 100)}%</b></div>)}</div> : <p className="quiz-history-empty">Your saved attempts will appear here after you complete a quiz while signed in.</p>}
