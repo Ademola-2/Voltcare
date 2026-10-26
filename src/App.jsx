@@ -539,8 +539,29 @@ function App() {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       const credential = await signInWithPopup(auth, provider);
-      const displayName = credential.user.displayName || credential.user.email?.split("@")[0] || "there";
+      const googleUser = credential.user;
+      const displayName = googleUser.displayName || googleUser.email?.split("@")[0] || "there";
       const isNewUser = getAdditionalUserInfo(credential)?.isNewUser;
+      // Ensure Google-authenticated users have a Firestore profile for Admin Workspace.
+      // Only create missing profile fields; never overwrite an existing username or learning history.
+      const profileRef = doc(db, "users", googleUser.uid);
+      const profileSnapshot = await getDoc(profileRef);
+      if (!profileSnapshot.exists()) {
+        await setDoc(profileRef, {
+          name: displayName,
+          email: googleUser.email || "",
+          authProvider: "google.com",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else {
+        const existingProfile = profileSnapshot.data();
+        const profilePatch = { updatedAt: serverTimestamp() };
+        if (!existingProfile.name && displayName) profilePatch.name = displayName;
+        if (!existingProfile.email && googleUser.email) profilePatch.email = googleUser.email;
+        if (!existingProfile.authProvider) profilePatch.authProvider = "google.com";
+        await setDoc(profileRef, profilePatch, { merge: true });
+      }
       setWelcomeToast(isNewUser ? "Welcome to VoltCare — Engineering, Made Clear." : "Welcome back, " + displayName + "!");
       setAuthOpen(false);
       setAuthEmail("");
