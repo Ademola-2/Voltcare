@@ -355,13 +355,47 @@ const starterLessons = [
 { id:"starter-solar-array-basics", title:"Solar Array Basics", category:"SOLAR PLANNING", summary:"A preliminary array estimate relates daily energy demand to sun hours and system losses.", formula:"Wp ≈ Wh ÷ (H × f)", body:"A rough solar array estimate divides daily energy demand by peak sun hours and an allowance for system losses. Peak sun hours represent equivalent hours at 1,000 W/m², not simply the number of daylight hours.\n\nApproximate formula:\nArray power (Wp) ≈ daily energy (Wh) ÷ (peak sun hours × derating factor)\n\nWorked example:\nFor 5,000 Wh/day, 5 peak-sun-hours, and a 0.75 derating factor: 5,000 ÷ (5 × 0.75) ≈ 1,333 Wp.\n\nThis is an early estimate only. Site-specific solar resource, shading, orientation, temperature, battery losses, inverter efficiency, seasonal demand, and equipment specifications must be assessed before choosing a system." }
 ];
 
-const quizQuestions = [
-  { question: "Which formula represents Ohm’s Law?", options: ["V = I × R", "P = V + I", "R = V × I", "I = V × R"], answer: 0, explanation: "Voltage equals current multiplied by resistance: V = I × R." },
-  { question: "A 12 V supply drives 2 A through a load. What is the power?", options: ["6 W", "10 W", "24 W", "14 W"], answer: 2, explanation: "Power is voltage × current, so 12 × 2 = 24 W." },
-  { question: "What unit is commonly used for electrical energy consumption on utility bills?", options: ["Ampere", "Kilowatt-hour (kWh)", "Ohm", "Volt"], answer: 1, explanation: "Electrical energy consumption is commonly measured in kilowatt-hours (kWh)." },
-  { question: "What does peak sun hours help estimate in a solar plan?", options: ["Battery color", "Daily solar energy available", "Wire length only", "The inverter brand"], answer: 1, explanation: "Peak sun hours are used with daily energy demand and system losses to estimate PV array size." },
-  { question: "Before installing a real electrical or solar system, what should you do?", options: ["Use the estimate without checking", "Ignore protection devices", "Verify the design, ratings, and local requirements", "Choose the smallest cable"], answer: 2, explanation: "Calculator results are preliminary. Equipment ratings, protection, local codes, and qualified assessment matter." },
+const quizQuestionBank = [
+  { id: "ohms-formula", question: "Which formula represents Ohm’s Law?", options: ["V = I × R", "P = V + I", "R = V × I", "I = V × R"], answer: 0, explanation: "Voltage equals current multiplied by resistance: V = I × R.", topic: "Ohm’s Law" },
+  { id: "ohms-current", question: "A 12 V supply is connected across a 6 Ω resistor. What current flows?", options: ["0.5 A", "2 A", "6 A", "72 A"], answer: 1, explanation: "I = V ÷ R = 12 ÷ 6 = 2 A.", topic: "Ohm’s Law" },
+  { id: "ohms-resistance", question: "A circuit has 10 V across it and a current of 2 A. What is its resistance?", options: ["5 Ω", "12 Ω", "20 Ω", "0.2 Ω"], answer: 0, explanation: "R = V ÷ I = 10 ÷ 2 = 5 Ω.", topic: "Ohm’s Law" },
+  { id: "ohms-current-2", question: "If voltage stays constant while resistance increases, what happens to current in a basic resistive circuit?", options: ["It increases", "It becomes infinite", "It decreases", "It always stays the same"], answer: 2, explanation: "From I = V ÷ R, increasing resistance reduces current when voltage is constant.", topic: "Ohm’s Law" },
+  { id: "power-formula", question: "Which formula calculates electrical power when voltage and current are known?", options: ["P = V × I", "P = V ÷ I", "P = I + R", "P = V − R"], answer: 0, explanation: "Electrical power is voltage multiplied by current: P = V × I.", topic: "Electrical Power" },
+  { id: "power-calc", question: "A 12 V device draws 2 A. How much electrical power does it use?", options: ["6 W", "10 W", "24 W", "14 W"], answer: 2, explanation: "P = V × I = 12 × 2 = 24 W.", topic: "Electrical Power" },
+  { id: "power-unit", question: "What is the standard unit of electrical power?", options: ["Ohm", "Watt", "Ampere-hour", "Kilowatt-hour"], answer: 1, explanation: "Power is measured in watts (W); energy is commonly measured in Wh or kWh.", topic: "Electrical Power" },
+  { id: "power-resistance", question: "Which formula can calculate power in a resistive circuit using current and resistance?", options: ["P = I² × R", "P = I ÷ R", "P = R ÷ I", "P = I + R"], answer: 0, explanation: "For a resistive circuit, power can be calculated using P = I² × R.", topic: "Electrical Power" },
+  { id: "energy-unit", question: "Which unit is commonly used for electrical energy on utility bills?", options: ["Volt", "Ampere", "Kilowatt-hour (kWh)", "Ohm"], answer: 2, explanation: "Utility energy consumption is commonly recorded in kilowatt-hours (kWh).", topic: "Energy Consumption" },
+  { id: "energy-calc", question: "A 100 W fan runs for 5 hours. How much energy does it use?", options: ["20 Wh", "500 Wh", "5,000 Wh", "100 kWh"], answer: 1, explanation: "Energy = power × time = 100 W × 5 h = 500 Wh, or 0.5 kWh.", topic: "Energy Consumption" },
+  { id: "energy-convert", question: "How many watt-hours are in 1 kilowatt-hour?", options: ["100 Wh", "500 Wh", "1,000 Wh", "10,000 Wh"], answer: 2, explanation: "One kilowatt-hour equals 1,000 watt-hours.", topic: "Energy Consumption" },
+  { id: "energy-time", question: "For the same appliance power, what happens to energy use if operating time doubles?", options: ["It halves", "It doubles", "It becomes zero", "It cannot change"], answer: 1, explanation: "Energy = power × time, so doubling operating time doubles energy use if power remains constant.", topic: "Energy Consumption" },
+  { id: "solar-sun-hours", question: "What do peak sun hours represent in a basic solar estimate?", options: ["All daylight hours exactly", "Equivalent hours at a standard solar irradiance", "Battery charging time only", "The number of panels"], answer: 1, explanation: "Peak sun hours express solar energy as equivalent hours at about 1,000 W/m².", topic: "Solar Planning" },
+  { id: "solar-array", question: "Which information is used in a preliminary estimate of solar array power?", options: ["Daily energy, peak sun hours, and a derating factor", "Battery color and panel brand", "Only the building height", "Only the inverter price"], answer: 0, explanation: "A simple estimate divides daily energy in Wh by peak sun hours multiplied by a derating factor.", topic: "Solar Planning" },
+  { id: "solar-derating", question: "Why is a derating factor included in a rough solar array estimate?", options: ["To ignore all losses", "To account approximately for system losses", "To determine cable color", "To increase daylight hours"], answer: 1, explanation: "The derating factor allows for approximate system losses that reduce usable solar output.", topic: "Solar Planning" },
+  { id: "solar-sizing", question: "A rough solar estimate gives a panel capacity. What should happen before equipment is purchased?", options: ["Treat it as a guaranteed design", "Ignore battery and inverter needs", "Have the full system checked for site conditions, ratings, and protection", "Choose cables by appearance"], answer: 2, explanation: "Array sizing is only an initial estimate; the full design needs qualified verification.", topic: "Solar Planning" },
+  { id: "battery-usable", question: "Why is a battery’s usable capacity often less than its nominal capacity?", options: ["Some capacity may be reserved to respect operating limits", "Batteries have no energy stored", "Voltage is measured in watts", "Panels create extra capacity automatically"], answer: 0, explanation: "Depth-of-discharge limits and system losses mean not all nominal stored energy should be assumed usable.", topic: "Battery Planning" },
+  { id: "inverter-loss", question: "What does inverter efficiency describe?", options: ["How much energy is lost converting DC to AC", "The number of solar panels", "The battery's color", "The cable length only"], answer: 0, explanation: "Inverter efficiency compares useful output energy with input energy; losses reduce available energy.", topic: "Solar Planning" },
+  { id: "safety-design", question: "Before installing a real electrical or solar system, what should you do?", options: ["Use an estimate without checking", "Ignore protection devices", "Verify equipment ratings, protection, and local requirements with a qualified professional", "Choose the smallest cable"], answer: 2, explanation: "Real installations require suitable ratings, protection, code compliance, and qualified assessment.", topic: "Electrical Safety" },
+  { id: "safety-isolation", question: "Before working on electrical equipment, what is a key safety step?", options: ["Assume it is off because a switch is down", "Follow safe isolation procedures and verify absence of voltage", "Remove protective devices", "Work on it while energized whenever possible"], answer: 1, explanation: "Use appropriate safe-isolation procedures and test for absence of voltage; follow local rules and training.", topic: "Electrical Safety" }
 ];
+
+function shuffleItems(items) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function createQuiz(excludedIds = []) {
+  const excluded = new Set(excludedIds);
+  let available = quizQuestionBank.filter((item) => !excluded.has(item.id));
+  if (available.length < 5) available = quizQuestionBank;
+  return shuffleItems(available).slice(0, 5).map((item) => {
+    const shuffledOptions = shuffleItems(item.options.map((text, index) => ({ text, correct: index === item.answer })));
+    return { ...item, options: shuffledOptions.map((option) => option.text), answer: shuffledOptions.findIndex((option) => option.correct) };
+  });
+}
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -400,8 +434,11 @@ function App() {
   const [adminMessage, setAdminMessage] = useState("");
   const [adminBusy, setAdminBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState(() => createQuiz());
+  const [quizUsedIds, setQuizUsedIds] = useState([]);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const startNewQuiz = () => { const excluded = [...new Set([...quizUsedIds, ...quizQuestions.map((item) => item.id)])]; const nextQuiz = createQuiz(excluded); setQuizQuestions(nextQuiz); setQuizUsedIds(nextQuiz.map((item) => item.id)); setQuizAnswers({}); setQuizSubmitted(false); };
   useEffect(() => onAuthStateChanged(auth, (currentUser) => setUser(currentUser)), []);
   useEffect(() => { if (!welcomeToast) return undefined; const timer = window.setTimeout(() => setWelcomeToast(""), 3500); return () => window.clearTimeout(timer); }, [welcomeToast]);
   useEffect(() => { if (!progressMessage) return undefined; const timer = window.setTimeout(() => setProgressMessage(""), 4000); return () => window.clearTimeout(timer); }, [progressMessage]);
@@ -735,13 +772,13 @@ function App() {
             <div className="quiz-heading-row"><div><span className="section-kicker">QUICK KNOWLEDGE CHECK</span><h3 id="quiz-heading">Test what you’ve learned</h3><p>Answer five questions on electrical fundamentals and solar planning. You’ll see your score and explanations when you submit.</p></div><span className="quiz-badge"><Check size={14} /> 5 questions</span></div>
             <form onSubmit={(event) => { event.preventDefault(); setQuizSubmitted(true); }}>
               <div className="quiz-question-list">
-                {quizQuestions.map((item, index) => <fieldset className="quiz-question" key={item.question}>
+                {quizQuestions.map((item, index) => <fieldset className="quiz-question" key={item.id}>
                   <legend><span>{String(index + 1).padStart(2, "0")}</span>{item.question}</legend>
                   <div className="quiz-options">{item.options.map((option, optionIndex) => <label className={quizSubmitted && optionIndex === item.answer ? "quiz-option quiz-option-correct" : quizSubmitted && quizAnswers[index] === optionIndex && optionIndex !== item.answer ? "quiz-option quiz-option-wrong" : "quiz-option"} key={option}><input type="radio" name={`quiz-${index}`} value={optionIndex} checked={quizAnswers[index] === optionIndex} disabled={quizSubmitted} onChange={() => setQuizAnswers((current) => ({ ...current, [index]: optionIndex }))} /><span>{option}</span>{quizSubmitted && optionIndex === item.answer && <Check size={16} />}</label>)}</div>
                   {quizSubmitted && <p className="quiz-explanation">{quizAnswers[index] === item.answer ? "Correct! " : "Review: "}{item.explanation}</p>}
                 </fieldset>)}
               </div>
-              {quizSubmitted ? <div className="quiz-result" role="status"><div><span className="section-kicker">YOUR RESULT</span><strong>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length} / {quizQuestions.length}</strong><p>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length === quizQuestions.length ? "Excellent work — you’ve mastered this set!" : quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length >= 3 ? "Good effort! Review the explanations and try again." : "Keep learning. Read the lessons above, then give it another try."}</p></div><button className="button button-secondary" type="button" onClick={() => { setQuizAnswers({}); setQuizSubmitted(false); }}>Try again</button></div> : <div className="quiz-actions"><span>{Object.keys(quizAnswers).length} of {quizQuestions.length} answered</span><button className="button button-primary" type="submit" disabled={Object.keys(quizAnswers).length !== quizQuestions.length}>Submit answers <ArrowRight size={16} /></button></div>}
+              {quizSubmitted ? <div className="quiz-result" role="status"><div><span className="section-kicker">YOUR RESULT</span><strong>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length} / {quizQuestions.length}</strong><p>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length === quizQuestions.length ? "Excellent work — you’ve mastered this set!" : quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length >= 3 ? "Good effort! Review the explanations and try again." : "Keep learning. Read the lessons above, then give it another try."}</p></div><button className="button button-secondary" type="button" onClick={startNewQuiz}>Try again</button></div> : <div className="quiz-actions"><span>{Object.keys(quizAnswers).length} of {quizQuestions.length} answered</span><button className="button button-primary" type="submit" disabled={Object.keys(quizAnswers).length !== quizQuestions.length}>Submit answers <ArrowRight size={16} /></button></div>}
             </form>
           </section>
 
