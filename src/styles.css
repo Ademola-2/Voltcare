@@ -711,3 +711,88 @@ h1, h2, h3 { font-family: Manrope, sans-serif; }
 .admin-delete-button { display: grid; place-items: center; color: #b42318; padding: 0 9px; }
 .admin-lesson-form .button-secondary { margin-left: 8px; }
 @media (max-width: 560px) { .admin-lesson-row { flex-direction: column; } .admin-lesson-actions { width: 100%; } .admin-lesson-actions button { flex: 1; } .admin-lesson-form .button-secondary { margin: 8px 0 0; width: 100%; } }
+
+
+/* Quiz history and saved performance */
+.quiz-save-feedback {
+  margin: 14px 0 0;
+  color: var(--text-muted, #716d80);
+  font-size: 0.92rem;
+}
+.quiz-history-panel {
+  margin: 22px 0;
+  padding: 24px;
+  border: 1px solid var(--border, #e9e5f2);
+  border-radius: 22px;
+  background: var(--card, #fff);
+}
+.quiz-history-panel .learning-progress-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.quiz-history-panel h3 {
+  margin: 4px 0 6px;
+}
+.quiz-history-panel p {
+  margin: 0;
+}
+.quiz-history-list {
+  display: grid;
+  gap: 13px;
+  margin: 22px 0;
+}
+.quiz-history-row {
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) minmax(90px, 2fr) 48px;
+  align-items: center;
+  gap: 14px;
+}
+.quiz-history-row > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.quiz-history-row strong,
+.quiz-history-row b {
+  color: var(--text, #19152b);
+  font-size: 0.94rem;
+}
+.quiz-history-row small {
+  color: var(--text-muted, #716d80);
+  font-size: 0.78rem;
+}
+.quiz-history-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface, #f0edf7);
+}
+.quiz-history-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6c3bff, #9747ff);
+}
+.quiz-history-row b {
+  text-align: right;
+}
+.quiz-history-empty {
+  margin: 18px 0 !important;
+  color: var(--text-muted, #716d80);
+}
+.dark-mode .quiz-history-panel,
+[data-theme="dark"] .quiz-history-panel {
+  background: #211b30;
+  border-color: #393047;
+}
+.dark-mode .quiz-history-row strong,
+.dark-mode .quiz-history-row b,
+[data-theme="dark"] .quiz-history-row strong,
+[data-theme="dark"] .quiz-history-row b {
+  color: #f6f2ff;
+}
+@media (max-width: 560px) {
+  .quiz-history-panel { padding: 18px; }
+  .quiz-history-row { grid-template-columns: 68px minmax(55px, 1fr) 40px; gap: 9px; }
+}
