@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, updateProfile } from "firebase/auth";
 import { auth, db } from "./firebase.js";
-import { addDoc, collection, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy, setDoc, getDoc, where, onSnapshot, updateDoc } from "firebase/firestore";
+import { addDoc, collection, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy, setDoc, getDoc, where, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -390,8 +390,8 @@ function shuffleItems(items) {
 function createQuiz(excludedIds = []) {
   const excluded = new Set(excludedIds);
   let available = quizQuestionBank.filter((item) => !excluded.has(item.id));
-  if (available.length < 5) available = quizQuestionBank;
-  return shuffleItems(available).slice(0, 5).map((item) => {
+  if (available.length < 10) available = quizQuestionBank;
+  return shuffleItems(available).slice(0, 10).map((item) => {
     const shuffledOptions = shuffleItems(item.options.map((text, index) => ({ text, correct: index === item.answer })));
     return { ...item, options: shuffledOptions.map((option) => option.text), answer: shuffledOptions.findIndex((option) => option.correct) };
   });
@@ -438,13 +438,42 @@ function App() {
   const [quizUsedIds, setQuizUsedIds] = useState([]);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const startNewQuiz = () => { const excluded = [...new Set([...quizUsedIds, ...quizQuestions.map((item) => item.id)])]; const nextQuiz = createQuiz(excluded); setQuizQuestions(nextQuiz); setQuizUsedIds(nextQuiz.map((item) => item.id)); setQuizAnswers({}); setQuizSubmitted(false); };
+  const [quizHistory, setQuizHistory] = useState([]);
+  const [quizSaveMessage, setQuizSaveMessage] = useState("");
+  const [quizSaveBusy, setQuizSaveBusy] = useState(false);
+  const startNewQuiz = () => { const excluded = [...new Set([...quizUsedIds, ...quizQuestions.map((item) => item.id)])]; const nextQuiz = createQuiz(excluded); setQuizQuestions(nextQuiz); setQuizUsedIds(nextQuiz.map((item) => item.id)); setQuizAnswers({}); setQuizSubmitted(false); setQuizSaveMessage(""); };
+  const quizScore = quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length;
+  const submitQuiz = async (event) => {
+    event.preventDefault();
+    if (quizSubmitted || Object.keys(quizAnswers).length !== quizQuestions.length) return;
+    setQuizSubmitted(true);
+    if (!user) { setQuizSaveMessage("Sign in to save this result and build your quiz history."); return; }
+    const attempt = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      score: quizScore,
+      total: quizQuestions.length,
+      percentage: Math.round((quizScore / quizQuestions.length) * 100),
+      questionIds: quizQuestions.map((item) => item.id),
+      topics: [...new Set(quizQuestions.map((item) => item.topic))],
+      completedAt: new Date().toISOString()
+    };
+    setQuizSaveBusy(true);
+    setQuizSaveMessage("");
+    try {
+      await setDoc(doc(db, "users", user.uid), { quizHistory: arrayUnion(attempt) }, { merge: true });
+      setQuizHistory((current) => [attempt, ...current.filter((item) => item.id !== attempt.id)]);
+      setQuizSaveMessage("Quiz result saved to your account.");
+    } catch (error) {
+      console.error("Could not save quiz result", error);
+      setQuizSaveMessage("Your score is shown, but we couldn’t save it. Please try again after checking your connection.");
+    } finally { setQuizSaveBusy(false); }
+  };
   useEffect(() => onAuthStateChanged(auth, (currentUser) => setUser(currentUser)), []);
   useEffect(() => { if (!welcomeToast) return undefined; const timer = window.setTimeout(() => setWelcomeToast(""), 3500); return () => window.clearTimeout(timer); }, [welcomeToast]);
   useEffect(() => { if (!progressMessage) return undefined; const timer = window.setTimeout(() => setProgressMessage(""), 4000); return () => window.clearTimeout(timer); }, [progressMessage]);
   useEffect(() => { if (!adminMessage) return undefined; const timer = window.setTimeout(() => setAdminMessage(""), 4500); return () => window.clearTimeout(timer); }, [adminMessage]);
 
-  useEffect(() => { let active = true; const loadProgress = async () => { if (!user) { setLessonProgress({}); return; } try { const profile = await getDoc(doc(db, "users", user.uid)); if (active) setLessonProgress(profile.exists() ? (profile.data().lessonProgress || {}) : {}); } catch (error) { console.error("Could not load learning progress", error); } }; loadProgress(); return () => { active = false; }; }, [user]);
+  useEffect(() => { let active = true; const loadProgress = async () => { if (!user) { setLessonProgress({}); setQuizHistory([]); return; } try { const profile = await getDoc(doc(db, "users", user.uid)); if (active) { setLessonProgress(profile.exists() ? (profile.data().lessonProgress || {}) : {}); const history = profile.exists() ? (profile.data().quizHistory || []) : []; setQuizHistory([...history].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))); } } catch (error) { console.error("Could not load learning progress and quiz history", error); } }; loadProgress(); return () => { active = false; }; }, [user]);
   const finishLesson = async () => { if (!selectedLesson) return; if (!user) { setProgressMessage("Sign in to save your learning progress."); setSelectedLesson(null); setAuthOpen(true); return; } const lessonId = selectedLesson.id || `lesson-${(selectedLesson.title || "lesson").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`; const nextProgress = { ...lessonProgress, [lessonId]: { completed: true, completedAt: new Date().toISOString(), title: selectedLesson.title || "Lesson" } }; setProgressBusy(true); setProgressMessage(""); try { await setDoc(doc(db, "users", user.uid), { lessonProgress: nextProgress }, { merge: true }); setLessonProgress(nextProgress); setProgressMessage("Lesson completed — your progress has been saved."); setSelectedLesson(null); } catch (error) { console.error("Could not save lesson progress", error); setProgressMessage("Could not save progress. Please try again."); } finally { setProgressBusy(false); } };
   useEffect(() => { const lessonsQuery = query(collection(db, "lessons"), where("published", "==", true)); const unsubscribe = onSnapshot(lessonsQuery, (snap) => { const stored = snap.docs.map(d => ({ id: d.id, ...d.data() })); const byId = new Map(stored.map(item => [item.id, item])); const originals = starterLessons.map(lesson => ({ ...lesson, ...(byId.get(lesson.id) || {}), id: lesson.id, isStarter: true })); const extras = stored.filter(item => !starterLessons.some(lesson => lesson.id === item.id)); setPublishedLessons([...originals, ...extras].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))); }, (e) => { console.error("Could not listen for published lessons", e); }); return unsubscribe; }, []);
   useEffect(() => { let active = true; const check = async () => { setIsAdmin(false); setAdminOpen(false); if (!user) return; try { const snap = await getDoc(doc(db, "admins", user.uid)); if (active) setIsAdmin(snap.exists() && snap.data()?.role === "admin"); } catch (e) { console.error("Admin check failed", e); if (active) setIsAdmin(false); } }; check(); return () => { active = false; }; }, [user]);
@@ -714,6 +743,11 @@ function App() {
           </div>
           <article className="learning-progress-panel"><div className="learning-progress-heading"><span className="dashboard-stat-icon"><BookOpen size={19} /></span><div><span className="dashboard-stat-label">LEARNING PROGRESS</span><h3>Your learning journey</h3><p>{Object.values(lessonProgress).filter((item) => item?.completed).length} lessons completed so far</p></div></div><div className="learning-progress-track"><span style={{ width: `${Math.min(100, Math.round((Object.values(lessonProgress).filter((item) => item?.completed).length / Math.max(4, 4 + publishedLessons.length)) * 100))}%` }} /></div><div className="learning-progress-meta"><span>{Math.min(Object.values(lessonProgress).filter((item) => item?.completed).length, 4 + publishedLessons.length)} of {4 + publishedLessons.length} lessons completed</span><a href="#learn">Continue learning <ArrowRight size={14} /></a></div></article>
           {progressMessage && <p className="progress-feedback" role="status">{progressMessage}</p>}
+          <article className="quiz-history-panel">
+            <div className="learning-progress-heading"><span className="dashboard-stat-icon"><Check size={19} /></span><div><span className="dashboard-stat-label">QUIZ PERFORMANCE</span><h3>Your quiz history</h3><p>{quizHistory.length} saved attempt{quizHistory.length === 1 ? "" : "s"} · average {quizHistory.length ? Math.round(quizHistory.reduce((sum, item) => sum + Number(item.percentage ?? (item.score / item.total) * 100), 0) / quizHistory.length) : 0}% · best {quizHistory.length ? Math.max(...quizHistory.map((item) => Number(item.percentage ?? (item.score / item.total) * 100))) : 0}%</p></div></div>
+            {quizHistory.length ? <div className="quiz-history-list">{quizHistory.slice(0, 5).map((attempt) => <div className="quiz-history-row" key={attempt.id}><span><strong>{attempt.score}/{attempt.total}</strong><small>{new Date(attempt.completedAt).toLocaleDateString()}</small></span><span className="quiz-history-bar"><i style={{ width: `${attempt.percentage ?? Math.round(attempt.score / attempt.total * 100)}%` }} /></span><b>{attempt.percentage ?? Math.round(attempt.score / attempt.total * 100)}%</b></div>)}</div> : <p className="quiz-history-empty">Complete a quiz while signed in and your results will appear here.</p>}
+            <a className="dashboard-action-link" href="#learn"><span><BookOpen size={18} /> Take a ten-question quiz</span><ArrowRight size={16} /></a>
+          </article>
           <div className="dashboard-lower-grid">
             <article className="dashboard-info-card">
               <span className="section-kicker">ACCOUNT DETAILS</span>
@@ -769,8 +803,8 @@ function App() {
           <p className="learning-safety"><CircleHelp size={17} /> These lessons are introductory. Real installations require correct equipment ratings, protection, local-code compliance, and qualified assessment.</p>
 
           <section className="quiz-panel" aria-labelledby="quiz-heading">
-            <div className="quiz-heading-row"><div><span className="section-kicker">QUICK KNOWLEDGE CHECK</span><h3 id="quiz-heading">Test what you’ve learned</h3><p>Answer five questions on electrical fundamentals and solar planning. You’ll see your score and explanations when you submit.</p></div><span className="quiz-badge"><Check size={14} /> 5 questions</span></div>
-            <form onSubmit={(event) => { event.preventDefault(); setQuizSubmitted(true); }}>
+            <div className="quiz-heading-row"><div><span className="section-kicker">QUICK KNOWLEDGE CHECK</span><h3 id="quiz-heading">Test what you’ve learned</h3><p>Answer ten randomized questions on electrical fundamentals, energy, battery planning, solar, and safety. You’ll see your score and explanations when you submit.</p></div><span className="quiz-badge"><Check size={14} /> 10 questions</span></div>
+            <form onSubmit={submitQuiz}>
               <div className="quiz-question-list">
                 {quizQuestions.map((item, index) => <fieldset className="quiz-question" key={item.id}>
                   <legend><span>{String(index + 1).padStart(2, "0")}</span>{item.question}</legend>
@@ -778,7 +812,7 @@ function App() {
                   {quizSubmitted && <p className="quiz-explanation">{quizAnswers[index] === item.answer ? "Correct! " : "Review: "}{item.explanation}</p>}
                 </fieldset>)}
               </div>
-              {quizSubmitted ? <div className="quiz-result" role="status"><div><span className="section-kicker">YOUR RESULT</span><strong>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length} / {quizQuestions.length}</strong><p>{quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length === quizQuestions.length ? "Excellent work — you’ve mastered this set!" : quizQuestions.filter((item, index) => quizAnswers[index] === item.answer).length >= 3 ? "Good effort! Review the explanations and try again." : "Keep learning. Read the lessons above, then give it another try."}</p></div><button className="button button-secondary" type="button" onClick={startNewQuiz}>Try again</button></div> : <div className="quiz-actions"><span>{Object.keys(quizAnswers).length} of {quizQuestions.length} answered</span><button className="button button-primary" type="submit" disabled={Object.keys(quizAnswers).length !== quizQuestions.length}>Submit answers <ArrowRight size={16} /></button></div>}
+              {quizSubmitted ? <div className="quiz-result" role="status"><div><span className="section-kicker">YOUR RESULT</span><strong>{quizScore} / {quizQuestions.length}</strong><p>{quizScore === quizQuestions.length ? "Excellent work — you’ve mastered this set!" : quizScore >= 7 ? "Good effort! Review the explanations and try again." : "Keep learning. Read the lessons above, then give it another try."}</p></div><button className="button button-secondary" type="button" onClick={startNewQuiz}>Try another set</button></div>{quizSaveMessage && <p className="quiz-save-feedback" role="status">{quizSaveBusy ? "Saving your score…" : quizSaveMessage}</p>} : <div className="quiz-actions"><span>{Object.keys(quizAnswers).length} of {quizQuestions.length} answered</span><button className="button button-primary" type="submit" disabled={Object.keys(quizAnswers).length !== quizQuestions.length}>Submit answers <ArrowRight size={16} /></button></div>}
             </form>
           </section>
 
