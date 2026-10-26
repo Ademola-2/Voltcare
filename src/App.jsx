@@ -339,6 +339,18 @@ function SolarPlanner({ user, onSave }) {
             </div>
           ) : <div className="result-placeholder"><Sun size={25} /><p>Enter your energy needs and planning assumptions, then tap <strong>Estimate solar system</strong>.</p></div>}
           {calculated && valid && <button className="button button-secondary save-calculation-button" type="button" onClick={() => onSave("Solar Planner", { inputs: { dailyEnergyKwh: energy, peakSunHours: sun, deratingFactor: lossFactor, backupDays: days, usableBatteryFraction: dod, inverterEfficiency: inverterEff, batteryVoltageV: batteryVoltage }, results: { estimatedArrayWp: panelWatts, estimatedBatteryWh: batteryWh, estimatedBatteryAh: batteryAh } })} disabled={!user}>Save calculation <Check size={16} /></button>}
+          {calculated && valid && <section className="solar-print-report" aria-label="Solar planning report">
+            <div className="solar-report-heading"><div><span className="section-kicker">VOLTCARE · SOLAR PLANNING REPORT</span><h3>Preliminary system estimate</h3><p>Generated {new Date().toLocaleDateString()}</p></div><button className="button button-primary solar-print-button" type="button" onClick={() => window.print()}>Print / Save as PDF</button></div>
+            <div className="solar-report-grid">
+              <div><span>Estimated solar array</span><strong>{fmt(panelWatts)} Wp</strong></div>
+              <div><span>Estimated nominal battery storage</span><strong>{fmt(batteryWh / 1000)} kWh</strong></div>
+              <div><span>Approx. battery capacity</span><strong>{fmt(batteryAh)} Ah at {fmt(batteryVoltage)} V</strong></div>
+              <div><span>Daily energy demand</span><strong>{fmt(energy)} kWh/day</strong></div>
+            </div>
+            <h4>Planning assumptions</h4>
+            <ul><li>Peak sun hours: {fmt(sun)} hours/day</li><li>System derating factor: {fmt(lossFactor)}</li><li>Battery backup: {fmt(days)} day(s)</li><li>Usable battery fraction: {fmt(dod)}</li><li>Inverter efficiency: {fmt(inverterEff)}</li></ul>
+            <p className="solar-report-warning"><strong>Important:</strong> This is a preliminary estimate, not a final installation design or equipment specification. It does not size the inverter, charge controller, conductors, or protection devices, and it does not fully account for surge loads, shading, weather, temperature, or battery chemistry. Have a qualified solar professional verify the system and local requirements before purchasing or installing equipment.</p>
+          </section>}
           <p className="formula-note">Array estimate = daily Wh ÷ (peak sun hours × derating factor). Battery estimate includes backup days, usable battery fraction, and inverter efficiency.</p>
         </div>
       </div>
