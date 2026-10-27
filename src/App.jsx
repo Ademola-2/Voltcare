@@ -23,6 +23,7 @@ import {
   LogOut,
   ShieldCheck,
   Settings,
+  Search,
 } from "lucide-react";
 
 const tools = [
@@ -435,6 +436,8 @@ function App() {
   const [adminLessons, setAdminLessons] = useState(starterLessons.map(lesson => ({ ...lesson, isStarter: true, published: true })));
   const [publishedLessons, setPublishedLessons] = useState(starterLessons.map(lesson => ({ ...lesson, isStarter: true, published: true })));
   const [selectedLesson, setSelectedLesson] = useState(null);
+  const [lessonSearch, setLessonSearch] = useState("");
+  const [lessonCategoryFilter, setLessonCategoryFilter] = useState("All topics");
   const [lessonProgress, setLessonProgress] = useState({});
   const [progressBusy, setProgressBusy] = useState(false);
   const [progressMessage, setProgressMessage] = useState("");
@@ -887,10 +890,23 @@ function App() {
             <div><span className="section-kicker">VOLTCARE LEARNING CENTRE</span><h2>Build your knowledge,<br className="desktop-break" /> one concept at a time.</h2></div>
             <p>Short, practical lessons with formulas, worked examples, and reminders about where real-world engineering needs extra care.</p>
           </div>
-          <div className="lesson-grid">
-            {publishedLessons.filter(lesson => lesson.isStarter).map((lesson, index) => <article className="lesson-card lesson-card-interactive" key={lesson.id}><span className="lesson-number">LESSON {String(index + 1).padStart(2, "0")} · {lesson.category}</span><h3>{lesson.title}</h3><p>{lesson.summary}</p>{lesson.formula && <div className="lesson-formula">{lesson.formula}</div>}<button className="text-link lesson-read-button" type="button" onClick={() => setSelectedLesson({ ...lesson })}>Read full lesson <ArrowRight size={15} /></button></article>)}
-            {publishedLessons.filter(lesson => !lesson.isStarter).map((lesson, index) => <article className="lesson-card lesson-card-interactive" key={lesson.id}><span className="lesson-number">COMMUNITY LESSON · {String(index + 1).padStart(2, "0")}</span><h3>{lesson.title}</h3><p>{lesson.summary}</p><span className="lesson-category">{lesson.category}</span><button className="text-link lesson-read-button" type="button" onClick={() => setSelectedLesson({ id: `community-${lesson.id}`, title: lesson.title, category: lesson.category, summary: lesson.summary, body: lesson.body || "", formula: lesson.formula || "" })}>Read full lesson <ArrowRight size={15} /></button></article>)}
+          <div className="learning-tools" aria-label="Find lessons">
+            <label className="lesson-search"><Search size={18} aria-hidden="true" /><span className="sr-only">Search lessons</span><input type="search" value={lessonSearch} onChange={event => setLessonSearch(event.target.value)} placeholder="Search lessons, topics, or keywords…" /></label>
+            <label className="lesson-filter"><span className="sr-only">Filter lessons by category</span><select value={lessonCategoryFilter} onChange={event => setLessonCategoryFilter(event.target.value)}><option>All topics</option>{[...new Set(publishedLessons.map(lesson => lesson.category).filter(Boolean))].sort((a, b) => a.localeCompare(b)).map(category => <option key={category} value={category}>{category}</option>)}</select></label>
           </div>
+          <div className="learning-results-row"><span>{publishedLessons.filter(lesson => { const searchText = `${lesson.title || ""} ${lesson.summary || ""} ${lesson.category || ""} ${lesson.body || ""} ${lesson.formula || ""}`.toLowerCase(); return searchText.includes(lessonSearch.trim().toLowerCase()) && (lessonCategoryFilter === "All topics" || lesson.category === lessonCategoryFilter); }).length} lessons available</span><span>{Object.values(lessonProgress).filter(item => item?.completed).length} completed by you</span></div>
+          <div className="lesson-grid">
+            {publishedLessons.filter(lesson => { const searchText = `${lesson.title || ""} ${lesson.summary || ""} ${lesson.category || ""} ${lesson.body || ""} ${lesson.formula || ""}`.toLowerCase(); return searchText.includes(lessonSearch.trim().toLowerCase()) && (lessonCategoryFilter === "All topics" || lesson.category === lessonCategoryFilter); }).map((lesson, index) => {
+              const lessonId = lesson.isStarter ? lesson.id : `community-${lesson.id}`;
+              const completed = Boolean(lessonProgress[lessonId]?.completed);
+              return <article className={`lesson-card lesson-card-interactive ${completed ? "lesson-card-completed" : ""}`} key={lesson.id}>
+                <div className="lesson-card-meta"><span className="lesson-number">{lesson.isStarter ? `LESSON ${String(index + 1).padStart(2, "0")}` : "COMMUNITY LESSON"}</span>{completed && <span className="lesson-complete-badge"><Check size={13} /> Completed</span>}</div>
+                <span className="lesson-category">{lesson.category || "General"}</span><h3>{lesson.title}</h3><p>{lesson.summary}</p>{lesson.formula && <div className="lesson-formula">{lesson.formula}</div>}
+                <button className="text-link lesson-read-button" type="button" onClick={() => setSelectedLesson(lesson.isStarter ? { ...lesson } : { id: lessonId, title: lesson.title, category: lesson.category, summary: lesson.summary, body: lesson.body || "", formula: lesson.formula || "" })}>{completed ? "Review lesson" : "Read full lesson"} <ArrowRight size={15} /></button>
+              </article>;
+            })}
+          </div>
+          {publishedLessons.filter(lesson => { const searchText = `${lesson.title || ""} ${lesson.summary || ""} ${lesson.category || ""} ${lesson.body || ""} ${lesson.formula || ""}`.toLowerCase(); return searchText.includes(lessonSearch.trim().toLowerCase()) && (lessonCategoryFilter === "All topics" || lesson.category === lessonCategoryFilter); }).length === 0 && <div className="lesson-empty-state"><BookOpen size={25} /><h3>No lessons found</h3><p>Try another keyword or choose a different topic.</p><button type="button" className="button button-secondary" onClick={() => { setLessonSearch(""); setLessonCategoryFilter("All topics"); }}>Clear filters</button></div>}
           <p className="learning-safety"><CircleHelp size={17} /> These lessons are introductory. Real installations require correct equipment ratings, protection, local-code compliance, and qualified assessment.</p>
 
           <section className="quiz-panel" aria-labelledby="quiz-heading" id="lesson-quiz">
