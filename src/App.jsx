@@ -14,6 +14,8 @@ import {
   Compass,
   Globe2,
   Menu,
+  MessageCircle,
+  Send,
   Moon,
   PlugZap,
   Sun,
@@ -412,6 +414,10 @@ function createQuiz(excludedIds = []) {
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInput, setAiInput] = useState("");
+  const [aiMessages, setAiMessages] = useState([{ role: "assistant", content: "Hi! I’m VoltCare AI. Ask me about electrical engineering, solar planning, batteries, energy use, or a lesson you’re studying. For safety, I can’t replace an on-site qualified electrician." }]);
+  const [aiBusy, setAiBusy] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
@@ -729,6 +735,29 @@ function App() {
     else setSavedCalculations([]);
   }, [user]);
   const closeMenu = () => setMenuOpen(false);
+  const sendAiMessage = async (event) => {
+    event?.preventDefault();
+    const text = aiInput.trim();
+    if (!text || aiBusy) return;
+    const nextMessages = [...aiMessages, { role: "user", content: text }];
+    setAiMessages(nextMessages);
+    setAiInput("");
+    setAiBusy(true);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "The assistant couldn't respond right now.");
+      setAiMessages((messages) => [...messages, { role: "assistant", content: data.reply || "Sorry, I couldn't create a response. Please try again." }]);
+    } catch (error) {
+      setAiMessages((messages) => [...messages, { role: "assistant", content: error.message || "Connection problem. Please try again shortly." }]);
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   return (
     <div className={darkMode ? "site-shell dark-mode" : "site-shell"} id="home">
@@ -950,6 +979,33 @@ function App() {
         <div className="footer-main section-wrap"><Brand /><p>Making electrical engineering and energy planning easier to understand.</p><div className="footer-links"><a href="#tools">Tools</a><a href="#learn">Learn</a><a href="#contact">Contact</a><a href="https://github.com/Ademola-2/Voltcare" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={13} /></a></div></div>
         <div className="footer-bottom section-wrap"><span>© {new Date().getFullYear()} VoltCare. Built for a brighter, more informed future.</span><span>Engineering estimates are educational and do not replace professional assessment.</span></div>
       </footer>
+
+      <button className="ai-launcher" type="button" onClick={() => setAiOpen((open) => !open)} aria-label={aiOpen ? "Close VoltCare AI" : "Open VoltCare AI"}>
+        {aiOpen ? <X size={22} /> : <MessageCircle size={22} />}
+        <span>{aiOpen ? "Close assistant" : "Ask VoltCare AI"}</span>
+      </button>
+      {aiOpen && (
+        <section className="ai-chat-panel" aria-label="VoltCare AI assistant">
+          <div className="ai-chat-header">
+            <span className="ai-avatar"><Zap size={18} fill="currentColor" /></span>
+            <div><strong>VoltCare AI Pro</strong><small>Electrical & energy assistant</small></div>
+            <button type="button" className="ai-close" onClick={() => setAiOpen(false)} aria-label="Close chat"><X size={18} /></button>
+          </div>
+          <div className="ai-chat-messages" aria-live="polite">
+            {aiMessages.map((message, index) => (
+              <div key={index} className={message.role === "user" ? "ai-message user-message" : "ai-message"}>
+                {message.content}
+              </div>
+            ))}
+            {aiBusy && <div className="ai-message ai-thinking">VoltCare AI is thinking…</div>}
+          </div>
+          <form className="ai-chat-form" onSubmit={sendAiMessage}>
+            <input value={aiInput} onChange={(event) => setAiInput(event.target.value)} placeholder="Ask an electrical question…" aria-label="Message VoltCare AI" maxLength={1500} disabled={aiBusy} />
+            <button type="submit" disabled={aiBusy || !aiInput.trim()} aria-label="Send message"><Send size={18} /></button>
+          </form>
+          <p className="ai-chat-note">Educational guidance only. Never work on live electrical equipment.</p>
+        </section>
+      )}
     </div>
   );
 }
