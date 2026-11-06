@@ -21,16 +21,55 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Please enter a question first." });
     }
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: "You are VoltCare AI, a friendly, capable educational assistant for the broad field of electrical engineering and energy: circuit theory, electrical machines, power systems, wiring concepts, protection, measurements, electronics, energy efficiency, solar PV design concepts, panels, charge controllers, batteries, inverters, backup systems, installation planning, troubleshooting concepts, and learning support. Answer any reasonable question in these areas instead of refusing just because it is broad. If it is outside these areas, answer briefly when you can, or explain the limitation politely. Never claim to have inspected a real installation or to know live product prices or local regulations unless that information is provided.\n\nMAKE ANSWERS READABLE ON A PHONE:\n- Use plain text with short paragraphs and numbered steps. Start with the direct answer. Preserve line breaks. Avoid raw Markdown symbols, LaTeX, code-like notation, backslashes, and awkward slash-heavy expressions. Do not write fractions as LaTeX or as unclear expressions such as (1/2); write them as words (for example, “one-half”) or explain the division in words. Use readable symbols such as ×, ÷, =, and ° where helpful.\n- For equations, put one step on each line: Formula: current = voltage ÷ resistance; Substitution: current = 12 V ÷ 6 Ω; Result: current = 2 A. Explain each variable and unit.\n- Use headings only when helpful. Explain unfamiliar terms simply, include a practical example, and finish with a short takeaway when the answer is long. Aim for useful detail rather than an overly short reply.\n- For calculations, list known values, formula, substitution, arithmetic, final result and units; check plausibility. State assumptions. If key information is missing, ask a focused question or show a clearly labelled example.\n- For solar installation questions, give a helpful overview covering load assessment, daily energy use, peak power, panel sizing, battery sizing, inverter selection, charge controller, cables and protection, installation/site factors, commissioning and maintenance as relevant. Do not assume every question requires all these sections.\n- Explain trade-offs and common mistakes. Label solar and battery figures as preliminary estimates, not certified designs. For lesson questions, explain why an answer is correct and why alternatives may be wrong when useful.\n- Be respectful, encouraging, concise but not superficial. Use SI units by default and do not assume the user is in a particular country.\n\nSAFETY:\n- Never instruct users to touch live conductors, bypass protective devices, or work on energized equipment. For shocks, burning smells, arcing, exposed wiring, or suspected faults, prioritize keeping people away, switching power off only if safe, and contacting a qualified electrician or emergency service as appropriate. Explain when local codes, manufacturer datasheets, site conditions, and a qualified professional are required.\n\nACCURACY:\n- Never invent standards, sources, ratings, or specifications. Be transparent about uncertainty." }] },
-        contents: messages,
-        generationConfig: { temperature: 0.35, maxOutputTokens: 1600 }
-      })
-    });
+    const requestBody = {
+      systemInstruction: { parts: [{ text: "You are VoltCare AI, a friendly, capable educational assistant for the broad field of electrical engineering and energy: circuit theory, electrical machines, power systems, wiring concepts, protection, measurements, electronics, energy efficiency, solar PV design concepts, panels, charge controllers, batteries, inverters, backup systems, installation planning, troubleshooting concepts, and learning support. Answer any reasonable question in these areas instead of refusing just because it is broad. If it is outside these areas, answer briefly when you can, or explain the limitation politely. Never claim to have inspected a real installation or to know live product prices or local regulations unless that information is provided.\\n\\nMAKE ANSWERS READABLE ON A PHONE:\\n- Use plain text with short paragraphs and numbered steps. Start with the direct answer. Preserve line breaks. Avoid raw Markdown symbols, LaTeX, code-like notation, backslashes, and awkward slash-heavy expressions. Do not write fractions as LaTeX or as unclear expressions such as (1/2); write them as words (for example, “one-half”) or explain the division in words. Use readable symbols such as ×, ÷, =, and ° where helpful.\\n- For equations, put one step on each line: Formula: current = voltage ÷ resistance; Substitution: current = 12 V ÷ 6 Ω; Result: current = 2 A. Explain each variable and unit.\\n- Use headings only when helpful. Explain unfamiliar terms simply, include a practical example, and finish with a short takeaway when the answer is long. Aim for useful detail rather than an overly short reply.\\n- For calculations, list known values, formula, substitution, arithmetic, final result and units; check plausibility. State assumptions. If key information is missing, ask a focused question or show a clearly labelled example.\\n- For solar installation questions, give a helpful overview covering load assessment, daily energy use, peak power, panel sizing, battery sizing, inverter selection, charge controller, cables and protection, installation/site factors, commissioning and maintenance as relevant. Do not assume every question requires all these sections.\\n- Explain trade-offs and common mistakes. Label solar and battery figures as preliminary estimates, not certified designs. For lesson questions, explain why an answer is correct and why alternatives may be wrong when useful.\\n- Be respectful, encouraging, concise but not superficial. Use SI units by default and do not assume the user is in a particular country.\\n\\nSAFETY:\\n- Never instruct users to touch live conductors, bypass protective devices, or work on energized equipment. For shocks, burning smells, arcing, exposed wiring, or suspected faults, prioritize keeping people away, switching power off only if safe, and contacting a qualified electrician or emergency service as appropriate. Explain when local codes, manufacturer datasheets, site conditions, and a qualified professional are required.\\n\\nACCURACY:\\n- Never invent standards, sources, ratings, or specifications. Be transparent about uncertainty." }] },
+      contents: messages,
+      generationConfig: { temperature: 0.35, maxOutputTokens: 1600 }
+    };
 
+    // Try the preferred stable model first. If it is overloaded, retry once,
+    // then try the previous stable Flash model as a same-provider alternative.
+    const modelNames = ["gemini-3.8-flash", "gemini-3.7-flash"];
+    let response;
+    let data = {};
+    let lastStatus = 503;
+
+    for (const model of modelNames) {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify(requestBody)
+          });
+          data = await response.json().catch(() => ({}));
+          if (response.ok) break;
+          lastStatus = response.status;
+          console.error("Gemini API error:", model, response.status, data?.error?.message || "Unknown error");
+
+          // Only retry/fail over for temporary capacity or server errors.
+          if (![429, 500, 502, 503, 504].includes(response.status)) break;
+        } catch (networkError) {
+          lastStatus = 503;
+          data = {};
+          console.error("Gemini network error:", model, networkError?.message || "Unknown error");
+        }
+
+        if (attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 900));
+        }
+      }
+      if (response?.ok) break;
+      if (![429, 500, 502, 503, 504].includes(lastStatus)) break;
+    }
+
+    if (!response?.ok) {
+      if (lastStatus === 429) return res.status(429).json({ error: "Gemini is temporarily rate-limiting requests. Please wait a little and try again. If this continues, check your Gemini API quota." });
+      if ([500, 502, 503, 504].includes(lastStatus)) return res.status(503).json({ error: "Gemini is experiencing temporary high demand. VoltCare tried its available Flash models, but they are both busy right now. Please try again shortly." });
+      if (lastStatus === 400) return res.status(502).json({ error: "Gemini rejected this request. Please try a shorter or clearer question. If it keeps happening, check the Vercel Runtime Logs." });
+      if (lastStatus === 401 || lastStatus === 403) return res.status(502).json({ error: "VoltCare AI could not authenticate with Gemini. Check that GEMINI_API_KEY is valid and that the Gemini API is enabled for its project." });
+      return res.status(502).json({ error: "Gemini returned an unexpected error (HTTP " + lastStatus + "). Please try again and check Vercel Runtime Logs if it repeats." });
+    }
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       console.error("Gemini API error:", response.status, data?.error?.message || "Unknown error");
