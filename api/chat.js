@@ -47,10 +47,12 @@ export default async function handler(req, res) {
               body: JSON.stringify(requestBody),
               signal: controller.signal
             });
+            // Keep the timeout active while reading the response body too.
+            // A provider can send headers but then stall while returning JSON.
+            data = await response.json().catch(() => ({}));
           } finally {
             clearTimeout(requestTimeout);
           }
-          data = await response.json().catch(() => ({}));
           if (response.ok) break;
           lastStatus = response.status;
           console.error("Gemini API error:", model, response.status, data?.error?.message || "Unknown error");
