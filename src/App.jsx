@@ -744,16 +744,27 @@ function App() {
     setAiInput("");
     setAiBusy(true);
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
-      });
+      const controller = new AbortController();
+      const requestTimeout = setTimeout(() => controller.abort(), 45000);
+      let response;
+      try {
+        response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(requestTimeout);
+      }
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "The assistant couldn't respond right now.");
       setAiMessages((messages) => [...messages, { role: "assistant", content: data.reply || "Sorry, I couldn't create a response. Please try again." }]);
     } catch (error) {
-      setAiMessages((messages) => [...messages, { role: "assistant", content: error.message || "Connection problem. Please try again shortly." }]);
+      const message = error.name === "AbortError"
+        ? "VoltCare AI is taking too long to respond. Gemini may be busy right now. Please try again shortly."
+        : (error.message || "Connection problem. Please try again shortly.");
+      setAiMessages((messages) => [...messages, { role: "assistant", content: message }]);
     } finally {
       setAiBusy(false);
     }
