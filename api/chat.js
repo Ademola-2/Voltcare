@@ -70,16 +70,6 @@ export default async function handler(req, res) {
       if (lastStatus === 401 || lastStatus === 403) return res.status(502).json({ error: "VoltCare AI could not authenticate with Gemini. Check that GEMINI_API_KEY is valid and that the Gemini API is enabled for its project." });
       return res.status(502).json({ error: "Gemini returned an unexpected error (HTTP " + lastStatus + "). Please try again and check Vercel Runtime Logs if it repeats." });
     }
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      console.error("Gemini API error:", response.status, data?.error?.message || "Unknown error");
-      if (response.status === 429) return res.status(429).json({ error: "VoltCare AI has reached a temporary request or free-tier quota limit. Please wait a little and try again. If this keeps happening, check the Gemini API usage and quota in Google AI Studio." });
-      if (response.status === 400) return res.status(502).json({ error: "Gemini rejected this request. Please try a shorter or clearer question. If it keeps happening, check the Vercel Runtime Logs for the API error." });
-      if (response.status === 401 || response.status === 403) return res.status(502).json({ error: "VoltCare AI could not authenticate with Gemini. Check that GEMINI_API_KEY is valid and that the Gemini API is enabled for its project." });
-      if (response.status === 503 || response.status === 504) return res.status(503).json({ error: "Gemini is temporarily busy. Please try the same question again in a moment." });
-      return res.status(502).json({ error: "Gemini returned an unexpected error (HTTP " + response.status + "). Please try again. If it repeats, check Vercel Runtime Logs for details." });
-    }
-
     const reply = data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
     if (!reply) return res.status(502).json({ error: "The assistant returned an empty response. Please try again." });
     return res.status(200).json({ reply });
