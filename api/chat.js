@@ -37,11 +37,19 @@ export default async function handler(req, res) {
     for (const model of modelNames) {
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
-          response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-            body: JSON.stringify(requestBody)
-          });
+          // Prevent a stalled provider connection from keeping the chat request open indefinitely.
+          const controller = new AbortController();
+          const requestTimeout = setTimeout(() => controller.abort(), 12000);
+          try {
+            response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+              body: JSON.stringify(requestBody),
+              signal: controller.signal
+            });
+          } finally {
+            clearTimeout(requestTimeout);
+          }
           data = await response.json().catch(() => ({}));
           if (response.ok) break;
           lastStatus = response.status;
